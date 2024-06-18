@@ -1,0 +1,18 @@
+package com.agile.qdmp.standalong.model.convert.organization;
+
+import com.agile.qdmp.standalong.model.dto.organization.StaffDTO;
+import com.agile.qdmp.standalong.model.entity.organization.Staff;
+import com.agile.tem.common.core.model.Convert;
+import org.mapstruct.Mapper;
+import org.mapstruct.factory.Mappers;
+
+/**
+ * 职员表 数据转换
+ *
+ * @author wenbinglei
+ * @date 2022-04-26 16:16:41
+ */
+@Mapper
+public interface StaffConverter extends Convert<Staff, StaffDTO> {
+    StaffConverter INSTANCE = Mappers.getMapper(StaffConverter.class);
+}

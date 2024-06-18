@@ -1,0 +1,18 @@
+package com.agile.qdmp.standalong.service.account.impl;
+
+import com.agile.qdmp.standalong.mapper.account.SocialInfoMapper;
+import com.agile.qdmp.standalong.model.entity.account.SocialInfo;
+import com.agile.qdmp.standalong.service.account.ISocialInfoService;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import org.springframework.stereotype.Service;
+
+/**
+ * 社会化用户表 服务类
+ *
+ * @author wenbinglei
+ * @date 2021-03-23 18:00:08
+ */
+@Service
+public class SocialInfoServiceImpl extends ServiceImpl<SocialInfoMapper, SocialInfo> implements ISocialInfoService {
+
+}

@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.agile.qdmp.standalong.mapper.rbac.AccountRoleMapper">
+
+    <select id="listAccountRoleByUserName" resultType="AccountRole">
+        SELECT
+        ra.*
+        FROM
+        account_info a
+        LEFT JOIN rbac_account_role ra ON ra.account_id = a.id
+        WHERE
+        a.deleted=0
+        AND a.username = #{query.username}
+        AND ra.system_name IN
+        <foreach collection="query.systemNames" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </select>
+
+    <delete id="removeGuest">
+        delete from rbac_account_role where account_id=#{accountId} and system_name=#{systemName} and role_code like '%guest'
+    </delete>
+
+    <delete id="removeRoles">
+        delete from rbac_account_role where account_id=#{accountId} and role_id=#{roleId}
+        <if test="supplierId != null and supplierId != ''">
+            and supplier_id=#{supplierId}
+        </if>
+    </delete>
+
+    <delete id="removeByIdOriginal">
+        DELETE FROM `rbac_account_role` WHERE id=#{id}
+    </delete>
+</mapper>

@@ -1,0 +1,75 @@
+package com.agile.qdmp.standalong.model.dto.account;
+
+import com.agile.tem.common.core.model.BaseDTO;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+
+/**
+ * 用户收货地址表
+ *
+ * @author wenbinglei
+ * @date 2021-03-23 18:00:37
+ */
+@Data
+@NoArgsConstructor
+@EqualsAndHashCode(callSuper = false)
+@ApiModel(value = "AddressDTO", description = "用户收货地址表")
+public class AddressDTO extends BaseDTO {
+    private static final long serialVersionUID = 1L;
+    /**
+     * 用户ID
+     */
+    @ApiModelProperty(value = "用户ID")
+    @JsonSerialize(using= ToStringSerializer.class)
+    private Long accountId;
+    /**
+     * 送货时间类型 0表示工作日、双休日与假日均可送货 表示 1只双休日、假日送货(工作日不用送 2.只工作日送货(双休日、假日不用送)
+     */
+    @ApiModelProperty(value = "送货时间类型 0表示工作日、双休日与假日均可送货 表示 1只双休日、假日送货(工作日不用送 2.只工作日送货(双休日、假日不用送)  ")
+    private Integer sendType;
+    /**
+     * 姓名
+     */
+    @ApiModelProperty(value = "姓名")
+    private String name;
+    /**
+     * 手机号
+     */
+    @ApiModelProperty(value = "手机号")
+    private String mobile;
+    /**
+     * 省
+     */
+    @ApiModelProperty(value = "省")
+    private String province;
+    /**
+     * 市
+     */
+    @ApiModelProperty(value = "市")
+    private String city;
+    /**
+     * 区
+     */
+    @ApiModelProperty(value = "区")
+    private String area;
+    /**
+     * 小区
+     */
+    @ApiModelProperty(value = "小区")
+    private String town;
+    /**
+     * 地址
+     */
+    @ApiModelProperty(value = "地址")
+    private String address;
+    /**
+     * 邮编
+     */
+    @ApiModelProperty(value = "邮编")
+    private String postCode;
+}

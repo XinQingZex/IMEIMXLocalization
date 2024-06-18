@@ -1,0 +1,77 @@
+package com.agile.qdmp.standalong.model.entity.organization;
+
+import com.agile.tem.common.core.model.BaseModel;
+import com.baomidou.mybatisplus.annotation.TableName;
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+
+/**
+ * 职员表
+ *
+ * @author wenbinglei
+ * @date 2022-04-26 16:16:41
+ */
+@Data
+@TableName("erp_staff")
+@EqualsAndHashCode(callSuper = true)
+@ApiModel(value = "Staff", description = "职员表")
+public class Staff extends BaseModel {
+    private static final long serialVersionUID = 1L;
+    /**
+     * 企业id
+     */
+    @ApiModelProperty(value = "企业id")
+    private Long companyId;
+    /**
+     * 企业名称
+     */
+    @ApiModelProperty(value = "企业名称")
+    private String companyName;
+    /**
+     * 部门id
+     */
+    @ApiModelProperty(value = "部门id")
+    private Long departmentId;
+    /**
+     * 部门名称
+     */
+    @ApiModelProperty(value = "部门名称")
+    private String departmentName;
+    /**
+     * 用户id
+     */
+    @ApiModelProperty(value = "用户id")
+    private Long accountId;
+    /**
+     * 编码
+     */
+    @ApiModelProperty(value = "编码")
+    private String code;
+    /**
+     * 姓名
+     */
+    @ApiModelProperty(value = "姓名")
+    private String name;
+    /**
+     * 手机号
+     */
+    @ApiModelProperty(value = "手机号")
+    private String contactMobile;
+    /**
+     * 用户性别
+     */
+    @ApiModelProperty(value = "用户性别")
+    private String gender;
+    /**
+     * 创建时间
+     */
+    @ApiModelProperty(value = "创建时间")
+    private Integer createTime;
+    /**
+     * 状态 有效 无效
+     */
+    @ApiModelProperty(value = "状态 有效 无效")
+    private Boolean state;
+}

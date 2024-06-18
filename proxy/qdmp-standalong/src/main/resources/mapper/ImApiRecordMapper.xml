@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.agile.qdmp.standalong.mapper.integrator.ImApiRecordMapper">
+    <update id="normalizePartTotal">
+        UPDATE im_part AS p
+        INNER JOIN (
+            SELECT
+                part_guid,
+                sum( quantity ) AS quantity,
+                sum( total_failed_lots ) AS total_failed_lots,
+                sum( total_failed_samples ) AS total_failed_samples,
+                sum( total_lots ) AS total_lots,
+                sum( total_samples ) AS total_samples
+            FROM
+                im_job
+            GROUP BY
+                part_guid
+            ) AS j ON p.guid = j.part_guid
+            SET p.lot_total = j.total_lots,
+            p.sample_total = j.total_samples
+        WHERE
+            1=1
+    </update>
+
+    <update id="normalizePartCompany">
+        UPDATE im_part p
+        INNER JOIN im_company c ON p.customer_guid = c.guid
+        SET p.customer_name = c.NAME
+        where p.customer_name = ''
+    </update>
+
+    <update id="normalizeJob">
+        UPDATE im_job j
+        INNER JOIN im_part p ON j.part_guid = p.guid
+        SET j.part_name = p.part_name,
+        j.part_number = p.part_number,
+        j.part_revision = p.part_revision_level,
+        j.customer_guid = p.customer_guid
+        WHERE
+            j.part_number = ''
+    </update>
+
+    <update id="normalizeDim">
+        UPDATE im_dimension d
+        INNER JOIN im_drawing dw ON d.drawing_guid = dw.guid
+        SET d.part_guid = dw.part_guid
+        where d.part_guid = ''
+    </update>
+
+    <update id="normalizeDrawing">
+        UPDATE im_drawing d
+        INNER JOIN im_part p ON d.drawing_guid = dw.guid
+        SET d.part_guid = dw.part_guid
+        where d.part_guid = ''
+    </update>
+</mapper>

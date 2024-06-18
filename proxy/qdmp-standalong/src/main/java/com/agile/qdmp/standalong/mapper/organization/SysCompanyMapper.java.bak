@@ -1,0 +1,14 @@
+package com.agile.qdmp.standalong.mapper.organization;
+
+import com.agile.qdmp.standalong.model.entity.organization.SysCompany;
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+
+/**
+ * 企业信息表
+ *
+ * @author wenbinglei
+ * @date 2022-04-26 16:16:45
+ */
+public interface SysCompanyMapper extends BaseMapper<SysCompany> {
+
+}

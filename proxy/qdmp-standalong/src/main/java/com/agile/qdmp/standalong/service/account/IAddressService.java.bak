@@ -1,0 +1,14 @@
+package com.agile.qdmp.standalong.service.account;
+
+import com.agile.qdmp.standalong.model.entity.account.Address;
+import com.baomidou.mybatisplus.extension.service.IService;
+
+/**
+ * 用户收货地址表
+ *
+ * @author wenbinglei
+ * @date 2021-03-23 18:00:37
+ */
+public interface IAddressService extends IService<Address> {
+
+}

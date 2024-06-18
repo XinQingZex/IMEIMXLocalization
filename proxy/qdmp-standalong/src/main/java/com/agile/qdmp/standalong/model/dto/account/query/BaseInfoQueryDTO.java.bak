@@ -1,0 +1,49 @@
+package com.agile.qdmp.standalong.model.dto.account.query;
+
+import com.agile.tem.common.core.model.BaseQueryDTO;
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
+import lombok.Data;
+
+/**
+ * 个人信息表
+ *
+ * @author wenbinglei
+ * @date 2021-03-23 18:00:27
+ */
+@Data
+@ApiModel(value = "", description = "个人信息表")
+public class BaseInfoQueryDTO extends BaseQueryDTO {
+    private static final long serialVersionUID = 1L;
+
+    /**
+     * 账户id
+     */
+    @ApiModelProperty(value = "账户id")
+    private Long accountId;
+    /**
+     * 户籍类型
+     */
+    @ApiModelProperty(value = "户籍类型")
+    private String censusType;
+    /**
+     * 现住-省
+     */
+    @ApiModelProperty(value = "现住-省")
+    private String province;
+    /**
+     * 现住-城市
+     */
+    @ApiModelProperty(value = "现住-城市")
+    private String city;
+    /**
+     * 现住-区
+     */
+    @ApiModelProperty(value = "现住-区")
+    private String area;
+    /**
+     * 现住-地址
+     */
+    @ApiModelProperty(value = "现住-地址")
+    private String address;
+}

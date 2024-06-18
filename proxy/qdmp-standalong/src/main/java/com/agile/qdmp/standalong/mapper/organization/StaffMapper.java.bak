@@ -1,0 +1,14 @@
+package com.agile.qdmp.standalong.mapper.organization;
+
+import com.agile.qdmp.standalong.model.entity.organization.Staff;
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+
+/**
+ * 职员表
+ *
+ * @author wenbinglei
+ * @date 2022-04-26 16:16:41
+ */
+public interface StaffMapper extends BaseMapper<Staff> {
+
+}

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.agile.qdmp.standalong.mapper.integrator.GageCategoryMapper">
+    <!--<update id="normalizeGageCategoryData">-->
+    <!--UPDATE im_part p-->
+    <!--INNER JOIN im_company c ON p.customer_guid = c.guid-->
+    <!--SET p.customer_name = c.NAME-->
+    <!--where p.customer_name = ''-->
+    <!--</update>-->
+
+    <select id="listByQuery" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            c.*
+        FROM
+            Objects_ToolCategories c
+        WHERE
+            IsDeleted = 0
+        <if test="query.keyWord != null and query.keyWord != ''">
+            and ToolCategoryName like '%'+#{query.keyWord}+'%'
+        </if>
+    </select>
+</mapper>

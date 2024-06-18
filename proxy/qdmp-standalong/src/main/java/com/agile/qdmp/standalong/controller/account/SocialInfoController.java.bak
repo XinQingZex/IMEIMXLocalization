@@ -1,0 +1,192 @@
+package com.agile.qdmp.standalong.controller.account;
+
+import com.agile.qdmp.standalong.model.dto.account.LoginInfoDTO;
+import com.agile.qdmp.standalong.model.dto.account.SocialInfoDTO;
+import com.agile.qdmp.standalong.model.dto.account.query.SocialInfoQueryDTO;
+import com.agile.qdmp.standalong.model.dto.rbac.AccountRoleDTO;
+import com.agile.qdmp.standalong.model.convert.account.LoginInfoConverter;
+import com.agile.qdmp.standalong.model.convert.account.SocialInfoConverter;
+import com.agile.qdmp.standalong.model.convert.rbac.AccountRoleConverter;
+import com.agile.qdmp.standalong.model.entity.account.LoginInfo;
+import com.agile.qdmp.standalong.model.entity.account.SocialInfo;
+import com.agile.qdmp.standalong.model.entity.rbac.AccountRole;
+import com.agile.qdmp.standalong.service.account.ILoginInfoService;
+import com.agile.qdmp.standalong.service.account.ISocialInfoService;
+import com.agile.qdmp.standalong.service.rbac.IAccountRoleService;
+import com.agile.tem.common.core.controller.SuperController;
+import com.agile.tem.common.core.controller.exception.BizException;
+import com.agile.tem.common.core.util.R;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.Optional;
+
+/**
+ * 社会化用户表 前端控制器
+ *
+ * @author wenbinglei
+ * @date 2021-03-23 18:00:08
+ */
+@Slf4j
+@RestController
+@RequestMapping("/api" )
+@Api(value = "socialInfo", tags = "社会化用户表管理")
+public class SocialInfoController extends SuperController {
+
+    private final ISocialInfoService socialInfoService;
+    private final ILoginInfoService loginInfoService;
+    private final IAccountRoleService accountRoleService;
+
+    public SocialInfoController(ISocialInfoService socialInfoService, ILoginInfoService loginInfoService, IAccountRoleService accountRoleService) {
+        this.socialInfoService = socialInfoService;
+        this.loginInfoService = loginInfoService;
+        this.accountRoleService = accountRoleService;
+    }
+
+    /**
+     * 新增社会化用户表
+     * @param socialInfoDTO 社会化用户表
+     * @return
+     */
+    @ApiOperation(value = "新增社会化用户表", notes = "新增社会化用户表")
+    @PostMapping("/socialInfo")
+    public R<SocialInfoDTO> createSocialInfo(@RequestBody SocialInfoDTO socialInfoDTO){
+        log.debug("REST request to save SocialInfo : {}", socialInfoDTO);
+        if (socialInfoDTO.getId() != null) {
+            throw new BizException("id exists");
+        }
+        SocialInfo data = socialInfoService.lambdaQuery().eq(SocialInfo::getAccountId, socialInfoDTO.getAccountId()).eq(SocialInfo::getUid, socialInfoDTO.getUid()).one();
+        SocialInfo newData = SocialInfoConverter.INSTANCE.from(socialInfoDTO);
+        boolean result;
+        if(data == null) {
+            result = socialInfoService.save(newData);
+        } else {
+            newData.setId(data.getId());
+            result = socialInfoService.updateById(newData);
+        }
+        if(result) {
+            socialInfoDTO.setId(newData.getId());
+            return R.ok(socialInfoDTO, "添加成功");
+        } else {
+            return R.failed(socialInfoDTO, "添加失败");
+        }
+    }
+
+    /**
+     * 修改社会化用户表
+     * @param socialInfoDTO 社会化用户表
+     * @return
+     */
+    @ApiOperation(value = "修改社会化用户表", notes = "修改社会化用户表")
+    @PutMapping("/socialInfo")
+    public R<SocialInfoDTO> updateSocialInfo(@RequestBody SocialInfoDTO socialInfoDTO) {
+        log.debug("REST request to update SocialInfo : {}", socialInfoDTO);
+        if (socialInfoDTO.getId() == null) {
+            throw new BizException("id null");
+        }
+        SocialInfo data = SocialInfoConverter.INSTANCE.from(socialInfoDTO);
+        boolean result = socialInfoService.updateById(data);
+        return result ? R.ok(socialInfoDTO, "修改成功") : R.failed(socialInfoDTO, "修改失败");
+    }
+
+    /**
+     * 根据查询条件获取分页数据
+     * @param queryDTO 社会化用户表
+     * @return
+     */
+    @ApiOperation(value = "分页查询", notes = "分页查询")
+    @GetMapping("/socialInfoes")
+    public R<IPage<SocialInfoDTO>> getAllSocialInfoes(SocialInfoQueryDTO queryDTO) {
+        log.debug("REST request to get a page of SocialInfoes");
+        String[] ascParameters = null;
+        String[] descParameters = null;
+        if(StringUtils.isNotBlank(queryDTO.getAscParameter())) {
+            ascParameters = new String[] {queryDTO.getAscParameter()};
+        }
+        if(StringUtils.isNotBlank(queryDTO.getDescParameter())) {
+            descParameters = new String[] {queryDTO.getDescParameter()};
+        }
+        IPage<SocialInfoDTO> result = socialInfoService.lambdaQuery()
+                .page(this.<SocialInfo>getPage(queryDTO.getCursor(), queryDTO.getLimit(), queryDTO.getSearchCount(), ascParameters, descParameters))
+                .convert(dto -> SocialInfoConverter.INSTANCE.to(dto));
+        return R.ok(result, "查询列表成功");
+    }
+
+    /**
+     * 根据ID获取社会化用户表
+     * @param id id
+     * @return
+     */
+    @ApiOperation(value = "通过id查询", notes = "通过id查询")
+    @GetMapping("/socialInfo/{id}")
+    public R<SocialInfoDTO> getSocialInfo(@PathVariable Long id) {
+        log.debug("REST request to get SocialInfo : {}", id);
+        SocialInfo socialInfo = socialInfoService.getById(id);
+        return socialInfo == null ? R.failed("未查询到数据") : R.ok(SocialInfoConverter.INSTANCE.to(socialInfo), "查询成功");
+    }
+
+    /**
+     * 通过id删除社会化用户表
+     * @param id id
+     * @return
+     */
+    @ApiOperation(value = "通过id删除社会化用户表", notes = "通过id删除社会化用户表")
+    @DeleteMapping("/socialInfo/{id}")
+    public R deleteSocialInfo(@PathVariable Long id) {
+        log.debug("REST request to delete SocialInfo : {}", id);
+        return socialInfoService.removeById(id) ? R.ok("删除成功") : R.failed("删除失败");
+    }
+
+    /**
+     * 通过uid查询
+     * @param uid
+     * @return
+     */
+    @ApiOperation(value = "通过uid查询", notes = "通过uid查询")
+    @GetMapping("/feign/socialInfo/uid/{uid}")
+    public SocialInfoDTO getSocialInfoByUid(@PathVariable String uid) {
+        log.debug("REST request to get SocialInfo : {}", uid);
+        Optional<SocialInfo> socialInfo = socialInfoService.lambdaQuery().eq(SocialInfo::getUid, uid).oneOpt();
+        return socialInfo.map(info -> {
+            SocialInfoDTO socialInfoDTO = SocialInfoConverter.INSTANCE.to(info);
+            LoginInfo account = loginInfoService.getById(info.getAccountId());
+            if(account != null) {
+                socialInfoDTO.setInfo(LoginInfoConverter.INSTANCE.to(account));
+            }
+            return socialInfoDTO;
+        }).orElse(null);
+    }
+
+//    /**
+//     * 根据uid返回用账户信息带角色列表
+//     * @param uid
+//     * @param systemName
+//     * @return
+//     */
+//    @GetMapping("/feign/socialInfo/uid/authorities")
+//    LoginInfoDTO getAccountWithAuthoritiesByUid(@RequestParam("uid") String uid, @RequestParam(value="systemName", required=false) String systemName) {
+//        SocialInfo socialInfo = socialInfoService.lambdaQuery().eq(SocialInfo::getUid, uid).select(SocialInfo::getId, SocialInfo::getAccountId, SocialInfo::getUid, SocialInfo::getUnionId, SocialInfo::getState).one();
+//        if(socialInfo == null) {
+//            return null;
+//        }
+//        LoginInfo info = loginInfoService.getById(socialInfo.getAccountId());
+//        if(info == null) {
+//            return null;
+//        } else {
+//            LoginInfoDTO infoDTO = LoginInfoConverter.INSTANCE.to(info);
+//            List<AccountRole> accountRoles = accountRoleService.lambdaQuery()
+//                    .eq(StringUtils.isNotEmpty(systemName), AccountRole::getSystemName, systemName)
+//                    .eq(AccountRole::getAccountId, info.getId())
+//                    .orderByDesc(AccountRole::getId)
+//                    .list();
+//            List<AccountRoleDTO> roles = accountRoles == null || accountRoles.size() == 0 ? null : AccountRoleConverter.INSTANCE.to(accountRoles);
+//            infoDTO.setRoles(roles);
+//            return infoDTO;
+//        }
+//    }
+}

@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.agile.qdmp.standalong.mapper.integrator.LotMapper">
+    <select id="listByQuery" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            l.*
+        FROM
+            Objects_Lots l
+        WHERE
+            IsDeleted = 0
+            AND
+            LotJobID = #{query.jobId};
+    </select>
+
+    <select id="listByContactId" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        l.ID,
+        l.LotNumber,
+        l.LotStatus,
+        j.JobNumber,
+        j.JobStatus,
+        p.PartName,
+        p.PartNumber,
+        p.PartRevisionLevel
+        FROM
+        Objects_Lots l
+        LEFT JOIN Objects_WorkOrderLines j on j.ID=l.LotJobID AND j.IsDeleted=0
+        LEFT JOIN Objects_Parts p on p.ID=j.JobPartID AND p.IsDeleted=0
+        WHERE
+        l.IsDeleted = 0
+        AND l.LotContactID = #{query.contactId}
+        <if test='query.keyWord!= null and query.keyWord !="" '>
+        AND (p.PartNumber like '%'+#{query.keyWord}+'%' or p.PartName like '%'+#{query.keyWord}+'%' or j.JobNumber like '%'+#{query.keyWord}+'%' or l.LotNumber like '%'+#{query.keyWord}+'%')
+        </if>
+        ORDER BY
+        l.ID DESC offset (#{query.cursor}-1) * #{query.limit} rows fetch next #{query.limit} rows only
+    </select>
+</mapper>

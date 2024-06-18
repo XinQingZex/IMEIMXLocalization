@@ -1,0 +1,144 @@
+package com.agile.qdmp.standalong.controller.organization;
+
+import com.agile.qdmp.standalong.model.dto.organization.DepartmentDTO;
+import com.agile.qdmp.standalong.model.dto.organization.query.DepartmentQueryDTO;
+import com.agile.qdmp.standalong.model.convert.organization.DepartmentConverter;
+import com.agile.qdmp.standalong.model.entity.organization.Department;
+import com.agile.qdmp.standalong.service.organization.IDepartmentService;
+import com.agile.tem.common.core.controller.SuperController;
+import com.agile.tem.common.core.controller.exception.BizException;
+import com.agile.tem.common.core.util.R;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.Objects;
+
+
+/**
+ * 部门表 前端控制器
+ *
+ * @author wenbinglei
+ * @date 2022-05-20 21:02:37
+ */
+@Slf4j
+@RestController
+@RequestMapping("/api" )
+@Api(value = "department", tags = "部门表管理")
+public class DepartmentController extends SuperController {
+
+    private final IDepartmentService departmentService;
+
+    public DepartmentController(IDepartmentService departmentService) {
+        this.departmentService = departmentService;
+    }
+
+    /**
+     * 新增部门表
+     * @param departmentDTO 部门表
+     * @return
+     */
+    @ApiOperation(value = "新增部门表", notes = "新增部门表")
+    @PostMapping("/department")
+    public R<DepartmentDTO> createDepartment(@RequestBody DepartmentDTO departmentDTO) {
+        log.debug("REST request to save Department : {}", departmentDTO);
+        if (departmentDTO.getId() != null) {
+            throw new BizException("不能包含主键");
+        }
+        Department data = DepartmentConverter.INSTANCE.from(departmentDTO);
+        data.setCreateTime((int) (System.currentTimeMillis()/1000));
+        boolean result = departmentService.save(data);
+        if(result) {
+            departmentDTO.setId(data.getId());
+            return R.ok(departmentDTO, "添加成功");
+        } else {
+            return R.failed(departmentDTO, "添加失败");
+        }
+    }
+
+    /**
+     * 修改部门表
+     * @param departmentDTO 部门表
+     * @return
+     */
+    @ApiOperation(value = "修改部门表", notes = "修改部门表")
+    @PutMapping("/department")
+    public R<DepartmentDTO> updateDepartment(@RequestBody DepartmentDTO departmentDTO) {
+        log.debug("REST request to update Department : {}", departmentDTO);
+        if (departmentDTO.getId() == null) {
+            throw new BizException("缺少主键");
+        }
+        Department data = DepartmentConverter.INSTANCE.from(departmentDTO);
+        return departmentService.updateById(data) ? R.ok(departmentDTO, "修改成功") : R.failed(departmentDTO, "修改失败");
+    }
+
+    /**
+     * 根据查询条件获取分页数据
+     * @param queryDTO 部门表
+     * @return
+     */
+    @ApiOperation(value = "分页查询部门表", notes = "分页查询部门表")
+    // @JsonFieldFilter(type = DepartmentDTO.class, include = {"id", ""})
+    // @JsonFieldFilter(type = DepartmentDTO.class, exclude = {"id", ""})
+    // @JsonFieldFilter(type = IPage.class, exclude = {"optimizeCountSql", "hitCount", "orders", "searchCount"})
+    // @JsonFieldFilters( value = {
+    //     @JsonFieldFilter(type = DepartmentDTO.class, include = {"id", "username", "mobile"}),
+    //     @JsonFieldFilter(type = DepartmentDTO.class, include = {"id", "username", "mobile"})
+    // })
+    // @Desensitization
+    @GetMapping("/departments")
+    public R<IPage<DepartmentDTO>> getAllDepartments(DepartmentQueryDTO queryDTO) {
+        log.debug("REST request to get a page of Departments");
+        String[] ascParameters = null;
+        String[] descParameters = null;
+        if(StringUtils.isNotBlank(queryDTO.getAscParameter())) {
+            ascParameters = new String[] {queryDTO.getAscParameter()};
+        }
+        if(StringUtils.isNotBlank(queryDTO.getDescParameter())) {
+            descParameters = new String[] {queryDTO.getDescParameter()};
+        }
+        IPage<DepartmentDTO> result = departmentService.lambdaQuery()
+                .like(StringUtils.isNotEmpty(queryDTO.getKeyWord()), Department::getName, queryDTO.getKeyWord())
+//                .eq(StringUtils.isNotEmpty(queryDTO.getClassName()), Department::getClassName, queryDTO.getClassName())
+                .eq(Objects.nonNull(queryDTO.getCompanyId()), Department::getCompanyId, queryDTO.getCompanyId())
+                .eq(Objects.nonNull(queryDTO.getParentId()), Department::getParentId, queryDTO.getParentId())
+                .page(this.<Department>getPage(queryDTO.getCursor(), queryDTO.getLimit(), queryDTO.getSearchCount(), ascParameters, descParameters))
+                .convert(dto -> DepartmentConverter.INSTANCE.to(dto));
+        return R.ok(result, "查询列表成功");
+    }
+
+    /**
+     * 根据ID获取部门表
+     * @param id id
+     * @return
+     */
+    @ApiOperation(value = "通过id查询部门表", notes = "通过id查询部门表")
+    // @JsonFieldFilter(type = DepartmentDTO.class, include = {"id", ""})
+    // @JsonFieldFilter(type = DepartmentDTO.class, exclude = {"id", ""})
+    // @JsonFieldFilters( value = {
+    //     @JsonFieldFilter(type = DepartmentDTO.class, include = {"id", "username", "mobile"}),
+    //     @JsonFieldFilter(type = DepartmentDTO.class, include = {"id", "username", "mobile"})
+    // })
+    // @Desensitization
+    @GetMapping("/department/{id}")
+    public R<DepartmentDTO> getDepartment(@PathVariable Long id) {
+        log.debug("REST request to get Department : {}", id);
+        Department department = departmentService.getById(id);
+        return department == null ? R.failed("未查询到数据") : R.ok(DepartmentConverter.INSTANCE.to(department), "查询成功");
+    }
+
+    /**
+     * 通过id删除部门表
+     * @param id id
+     * @return
+     */
+    @ApiOperation(value = "通过id删除部门表", notes = "通过id删除部门表")
+    @DeleteMapping("/department/{id}")
+    public R deleteDepartment(@PathVariable Long id) {
+        log.debug("REST request to delete Departments : {}", id);
+        return departmentService.removeById(id) ? R.ok("删除成功") : R.failed("删除失败");
+    }
+}

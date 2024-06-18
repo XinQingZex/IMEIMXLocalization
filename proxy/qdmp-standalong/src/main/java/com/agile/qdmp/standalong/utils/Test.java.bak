@@ -1,0 +1,90 @@
+package com.agile.qdmp.standalong.utils;
+
+import org.opencv.core.*;
+import org.opencv.imgcodecs.Imgcodecs;
+import org.opencv.imgproc.Imgproc;
+import org.opencv.objdetect.CascadeClassifier;
+
+import java.util.Arrays;
+
+/**
+ * @Author: wenbinglei
+ * @Date: 2022/12/14 09:43
+ * @Description:
+ */
+public class Test {
+    // 初始化人脸探测器
+    static CascadeClassifier faceDetector;
+
+    static {
+        // 加载OpenCV本地库
+        System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
+        // 从配置文件lbpcascade_frontalface.xml中创建一个人脸识别器，文件位于opencv安装目录中
+        faceDetector = new CascadeClassifier("D:\\opencv\\opencv\\sources\\data\\haarcascades\\haarcascade_frontalface_alt.xml");
+    }
+
+    public static void main(String[] args) {
+
+//        double comparison = match("C:\\Users\\Administrator\\AppData\\Local\\Temp\\face\\265250.png","C:\\Users\\Administrator\\AppData\\Local\\Temp\\face\\265418.png");
+//        System.out.println("对比结果：" + comparison);
+        double comparison = match("D:\\test\\1.png", "D:\\test\\2.png");
+        System.out.println("对比结果：" + comparison);
+//        if (comparison > 0.60) {
+//            System.out.println("人脸匹配成功");
+//        } else {
+//            System.out.println("人脸不匹配识别");
+//        }
+//
+//        double comparison2 = faceRecognitionComparison("D:\\test\\1.jpg", "D:\\test\\3.jpg");
+//        System.out.println("对比结果：" + comparison2);
+//        if (comparison2 > 0.60) {
+//            System.out.println("人脸匹配成功");
+//        } else {
+//            System.out.println("人脸不匹配识别");
+//        }
+        // 终止当前运行的 Java 虚拟机。
+        System.exit(0);
+    }
+
+
+    public static double match(String loginImagePath, String comparedImagePath) {
+        Mat mat1 = convMat(loginImagePath);
+        if (mat1 == null) {
+            return 0;
+        }
+
+        Mat mat2 = convMat(comparedImagePath);
+        Mat mat3 = new Mat();
+        Mat mat4 = new Mat();
+        // 颜色范围
+        MatOfFloat ranges = new MatOfFloat(0f, 256f);
+        // 直方图大小， 越大匹配越精确 (越慢)
+        MatOfInt histSize = new MatOfInt(1000);
+
+        Imgproc.calcHist(Arrays.asList(mat1), new MatOfInt(0), new Mat(), mat3, histSize, ranges);
+        Imgproc.calcHist(Arrays.asList(mat2), new MatOfInt(0), new Mat(), mat4, histSize, ranges);
+
+        // 比较两个密集或两个稀疏直方图
+        Double score = Imgproc.compareHist(mat3, mat4, Imgproc.CV_COMP_CORREL);
+        return score;
+    }
+
+    public static Mat convMat(String img) {
+        // 读取图像
+        Mat mat1 = Imgcodecs.imread(img);
+        Mat mat2 = new Mat();
+        // 灰度化:将图像从一种颜色空间转换为另一种颜色空间
+        Imgproc.cvtColor(mat1, mat2, Imgproc.COLOR_BGR2GRAY);
+        // 探测人脸:检测到的对象作为矩形列表返回
+        MatOfRect faceDetections = new MatOfRect();
+        faceDetector.detectMultiScale(mat1, faceDetections);
+        // rect中人脸图片的范围
+        for (Rect rect : faceDetections.toArray()) {
+            Mat face = new Mat(mat1, rect);
+            return face;
+        }
+        return null;
+    }
+
+
+}

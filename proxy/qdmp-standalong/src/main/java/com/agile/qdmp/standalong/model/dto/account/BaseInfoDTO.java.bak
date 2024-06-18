@@ -1,0 +1,92 @@
+package com.agile.qdmp.standalong.model.dto.account;
+
+import com.agile.tem.common.core.model.BaseDTO;
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+
+/**
+ * 个人信息表
+ *
+ * @author wenbinglei
+ * @date 2021-03-23 18:00:27
+ */
+@Data
+@NoArgsConstructor
+@EqualsAndHashCode(callSuper = false)
+@ApiModel(value = "BaseInfoDTO", description = "个人信息表")
+public class BaseInfoDTO extends BaseDTO {
+    private static final long serialVersionUID = 1L;
+    /**
+     * 账户id
+     */
+    @ApiModelProperty(value = "账户id")
+    private Long accountId;
+    /**
+     * 真实姓名
+     */
+    @ApiModelProperty(value = "真实姓名")
+    private String name;
+    /**
+     * 免冠照片
+     */
+    @ApiModelProperty(value = "免冠照片")
+    private String photo;
+    /**
+     * 民族
+     */
+    @ApiModelProperty(value = "民族")
+    private String nation;
+    /**
+     * 出生日期
+     */
+    @ApiModelProperty(value = "出生日期")
+    private String birthday;
+    /**
+     * 婚姻状况 未婚 已婚
+     */
+    @ApiModelProperty(value = "婚姻状况 未婚 已婚")
+    private String maritalState;
+    /**
+     * 学历
+     */
+    @ApiModelProperty(value = "学历")
+    private String educationState;
+    /**
+     * 政治面貌
+     */
+    @ApiModelProperty(value = "政治面貌")
+    private String politicsState;
+    /**
+     * 户籍所在地
+     */
+    @ApiModelProperty(value = "户籍所在地")
+    private String censusPlace;
+    /**
+     * 户籍类型
+     */
+    @ApiModelProperty(value = "户籍类型")
+    private String censusType;
+    /**
+     * 现住-省
+     */
+    @ApiModelProperty(value = "现住-省")
+    private String province;
+    /**
+     * 现住-城市
+     */
+    @ApiModelProperty(value = "现住-城市")
+    private String city;
+    /**
+     * 现住-区
+     */
+    @ApiModelProperty(value = "现住-区")
+    private String area;
+    /**
+     * 现住-地址
+     */
+    @ApiModelProperty(value = "现住-地址")
+    private String address;
+}

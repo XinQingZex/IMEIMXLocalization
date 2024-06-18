@@ -1,0 +1,14 @@
+package com.agile.qdmp.standalong.mapper.account;
+
+import com.agile.qdmp.standalong.model.entity.account.BaseInfo;
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+
+/**
+ * 个人信息表
+ *
+ * @author wenbinglei
+ * @date 2021-03-23 18:00:27
+ */
+public interface BaseInfoMapper extends BaseMapper<BaseInfo> {
+
+}

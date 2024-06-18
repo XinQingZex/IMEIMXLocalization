@@ -1,0 +1,18 @@
+package com.agile.qdmp.standalong.model.convert.organization;
+
+import com.agile.qdmp.standalong.model.dto.organization.SysCompanyDTO;
+import com.agile.qdmp.standalong.model.entity.organization.SysCompany;
+import com.agile.tem.common.core.model.Convert;
+import org.mapstruct.Mapper;
+import org.mapstruct.factory.Mappers;
+
+/**
+ * 企业信息表 数据转换
+ *
+ * @author wenbinglei
+ * @date 2022-04-26 16:16:45
+ */
+@Mapper
+public interface SysCompanyConverter extends Convert<SysCompany, SysCompanyDTO> {
+    SysCompanyConverter INSTANCE = Mappers.getMapper(SysCompanyConverter.class);
+}

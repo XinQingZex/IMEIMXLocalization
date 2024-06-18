@@ -1,0 +1,29 @@
+package com.agile.qdmp.standalong.service.integrator;
+
+import com.agile.qdmp.standalong.model.dto.integrator.RequestDTO;
+import com.agile.tem.common.core.util.R;
+import com.agile.qdmp.standalong.service.hystrix.ProxyFeignClientHystrix;
+import com.agile.tem.proxy.client.dto.RequestDTO;
+import com.alibaba.fastjson.JSONObject;
+import io.swagger.annotations.ApiOperation;
+import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+
+/**
+ * @Author: wenbinglei
+ * @Date: 2019/9/12 20:27
+ * @Description:
+ */
+@FeignClient(name = "api-proxy", fallback = ProxyFeignClientHystrix.class)
+public interface ProxyFeignClient {
+
+    /**
+     * request
+     * @param params 参数
+     * @return
+     */
+    @ApiOperation(value = "发送请求", notes = "发送请求")
+    @PostMapping("/api/proxy/handle")
+    R<JSONObject> handle(@RequestBody RequestDTO params);
+}

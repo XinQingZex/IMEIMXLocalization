@@ -1,0 +1,18 @@
+package com.agile.qdmp.standalong.service.account.impl;
+
+import com.agile.qdmp.standalong.mapper.account.SocialRelationMapper;
+import com.agile.qdmp.standalong.model.entity.account.SocialRelation;
+import com.agile.qdmp.standalong.service.account.ISocialRelationService;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import org.springframework.stereotype.Service;
+
+/**
+ * 社会化用户与系统用户关系表 服务类
+ *
+ * @author wenbinglei
+ * @date 2021-03-23 18:00:17
+ */
+@Service
+public class SocialRelationServiceImpl extends ServiceImpl<SocialRelationMapper, SocialRelation> implements ISocialRelationService {
+
+}

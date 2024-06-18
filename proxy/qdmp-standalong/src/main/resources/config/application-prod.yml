@@ -1,0 +1,164 @@
+logging:
+  level:
+    # ROOT: INFO
+    com.agile.qdmp.standalong: DEBUG
+    dao: debug
+    org:
+      mybatis: debug
+server:
+  port: 8082
+
+spring:
+  datasource:
+    druid:
+      stat-view-servlet:
+        enabled: true
+    dynamic:
+      primary: master_hx #设置默认的数据源或者数据源组,默认值即为master
+      strict: false #设置严格模式,默认false不启动. 启动后在未匹配到指定数据源时候会抛出异常,不启动则使用默认数据源.
+      p6spy: false
+      # 配置Druid全局默认值
+      druid:
+        initial-size: 5
+        max-active: 8
+        min-idle: 3
+        max-wait: 1000
+        validation-query: 'select 1'
+        filters: stat,wall
+        time-between-eviction-runs-millis: 60000
+        min-evictable-idle-time-millis: 300000
+        test-while-idle: true
+        test-on-borrow: false
+        test-on-return: false
+        pool-prepared-statements: true
+        max-open-prepared-statements: 20
+      #        # 以下是全局默认值，可以全局更改
+      #        initial-size:
+      #        max-active:
+      #        min-idle:
+      #        max-wait: 1000
+      #        validation-query: 'select 1'
+      #        time-between-eviction-runs-millis:
+      #        time-between-log-stats-millis:
+      #        stat-sqlmax-size:
+      #        min-evictable-idle-time-millis:
+      #        max-evictable-idle-time-millis:
+      #        test-while-idle:
+      #        test-on-borrow:
+      #        test-on-return:
+      #        validation-query-timeout:
+      #        use-global-datasource-stat:
+      #        async-init:
+      #        clear-filters-enable:
+      #        reset-stat-enable:
+      #        not-full-timeout-retry-count:
+      #        max-wait-thread-count:
+      #        fail-fast:
+      #        phyTimeout-millis:
+      #        keep-alive:
+      #        pool-prepared-statements:
+      #        init-variants:
+      #        init-global-variants:
+      #        use-unfair-lock:
+      #        kill-when-socket-read-timeout:
+      #        connection-properties:
+      #        max-pool-prepared-statement-per-connection-size:
+      #        init-connection-sqls:
+      #        share-prepared-statements:
+      #        connection-errorretry-attempts:
+      #        break-after-acquire-failure:
+      #        filters: stat,wall # 注意这个值和druid原生不一致，默认启动了stat,wall
+      datasource:
+        master_hx:
+          url: jdbc:mysql://sh-cynosdbmysql-grp-leb70w5s.sql.tencentcdb.com:23114/db_qdmp?useUnicode=true&characterEncoding=UTF8&serverTimezone=UTC&serverTimezone=Asia/Shanghai
+          username: root
+          password: wenbingleiA1
+        #          driver-class-name: com.mysql.cj.jdbc.Driver # 3.2.0开始支持SPI可省略此配置
+        slave_hx:
+          url: jdbc:mysql://sh-cynosdbmysql-grp-leb70w5s.sql.tencentcdb.com:23114/db_qdmp?useUnicode=true&characterEncoding=UTF8&serverTimezone=UTC&serverTimezone=Asia/Shanghai
+          username: root
+          password: wenbingleiA1
+  redis:
+    database: 0 # redis 数据库索引（默认为0）
+    host: 81.68.223.81
+    #redis 服务器连接密码（默认为空）
+    password: hyzh@123
+    port: 6379
+    # 连接超时时间（毫秒），默认2000ms
+    timeout: 2000ms
+    # cluster:
+    #   nodes: 192.168.0.123:7001,192.168.0.125:7002,192.168.0.126:7003,192.168.0.123:8003,192.168.0.125:8001,192.168.0.126:8002
+    #   maxRedirects: 6
+    jedis:
+      pool:
+        max-active: 8 # 连接池最大连接数（使用负值表示没有限制）
+        max-wait: -1 # 连接池最大阻塞等待时间（使用负值表示没有限制）
+        max-idle: 8 # 连接池中的最大空闲连接
+        min-idle: 0 # 连接池中的最小空闲连接
+
+# ===================================================================
+# hx specific properties
+# ===================================================================
+hx:
+  http:
+    version: V_1_1 # To use HTTP/2 you will need to activate TLS (see application-tls.yml)
+  # CORS is only enabled by default with the "dev" profile, so BrowserSync can access the API
+  cors:
+    allowed-origins: "*"
+    allowed-methods: "*"
+    allowed-headers: "*"
+    exposed-headers: "Authorization,Link,X-Total-Count"
+    allow-credentials: true
+    max-age: 1800
+  security:
+    client-authorization:
+      access-token-uri: http://weijia-uaa/oauth/token
+      token-service-id: umc-uaa
+      client-id: umc-uaa
+      client-secret: umc-uaa@
+uaa:
+  key-store:
+    name: config/tls/douyouyu_keystore.p12
+    password: wenbingleiA1
+    alias: douyouyu-uaa
+  web-client-configuration:
+    # Access Token is valid for 5 mins
+    access-token-validity-in-seconds: 290
+    # Refresh Token is valid for 7 days
+    refresh-token-validity-in-seconds-for-remember-me: 2592000
+    client-id: web-weijia-uaa
+    secret: hyzh-web-weijia-uaa@
+# ===================================================================
+# Application specific properties
+# ===================================================================
+# application:
+# mybatis
+mybatis-plus:
+  type-enums-package: com.agile.qdmp.standalong.client.enums
+  type-aliases-package: com.agile.qdmp.standalong.model.entity,com.agile.qdmp.standalong.model.dto
+# application:
+wx:
+  mp:
+    configs:
+    - appId: wxf85bb4ca85746038
+      secret: f4ada83767a01659197aeb28f0ecb318
+      token: wenbingleiA1
+      aesKey: 011qZCZSwrs56uwu30jFexEkL363YjEfkOxRumHKt5r
+    - appId: wx8ef86f3de9d8d751
+      secret: 4eab39d72f6ed0db3e4d6467cc94ceae
+      token: wenbingleiA1
+      aesKey: 011qZCZSwrs56uwu30jFexEkL363YjEfkOxRumHKt5r
+  miniapp:
+    configs:
+    - appId: wxf405f083a97e4d27
+      secret: 9021db221f29ddb3507e7007c779a261
+      token: wenbingleiA1
+      aesKey: DyKyvBI9A33IDeS64R3YnP4OYKcspw5YDmGVRYhV56g
+      msgDataFormat: JSON
+    - appId: wx0f912d21ad940bf4
+      secret: 22c003102023fc4f057c88c1485f2854
+      token: wenbingleiA1
+      aesKey: 011qZCZSwrs56uwu30jFexEkL363YjEfkOxRumHKt5r
+      msgDataFormat: JSON
+swagger:
+  title: UMC-UAA 认证功能模块

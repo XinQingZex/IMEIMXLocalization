@@ -1,0 +1,252 @@
+package com.agile.qdmp.standalong.controller.rbac;
+
+import com.agile.qdmp.standalong.model.dto.rbac.AccountRoleDTO;
+import com.agile.qdmp.standalong.model.dto.rbac.query.AccountRoleQueryDTO;
+import com.agile.qdmp.standalong.model.convert.rbac.AccountRoleConverter;
+import com.agile.qdmp.standalong.model.entity.rbac.AccountRole;
+import com.agile.qdmp.standalong.model.entity.rbac.Role;
+import com.agile.qdmp.standalong.service.rbac.IAccountRoleService;
+import com.agile.qdmp.standalong.service.rbac.IRoleService;
+import com.agile.tem.common.core.controller.SuperController;
+import com.agile.tem.common.core.controller.exception.BizException;
+import com.agile.tem.common.core.util.R;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.util.List;
+import java.util.Objects;
+
+
+/**
+ * 用户角色关联表 前端控制器
+ *
+ * @author wenbinglei
+ * @date 2021-03-23 18:02:04
+ */
+@Slf4j
+@RestController
+@RequestMapping("/api" )
+@Api(value = "accountRole", tags = "用户角色关联表管理")
+public class AccountRoleController extends SuperController {
+
+    private final IAccountRoleService accountRoleService;
+    private final IRoleService roleService;
+
+    public AccountRoleController(IAccountRoleService accountRoleService, IRoleService roleService) {
+        this.accountRoleService = accountRoleService;
+        this.roleService = roleService;
+    }
+
+    /**
+     * 新增用户角色关联表
+     * @param accountRoleDTO 用户角色关联表
+     * @return
+     */
+    @ApiOperation(value = "新增用户角色关联表", notes = "新增用户角色关联表")
+    @PostMapping("/accountRole")
+    public R<AccountRoleDTO> createAccountRole(@RequestBody AccountRoleDTO accountRoleDTO) {
+        log.debug("REST request to save AccountRole : {}", accountRoleDTO);
+        if (accountRoleDTO.getId() != null) {
+            throw new BizException("不能包含主键");
+        }
+        AccountRole currentData = accountRoleService.lambdaQuery()
+                .eq(AccountRole::getAccountId, accountRoleDTO.getAccountId())
+                .eq(AccountRole::getRoleId, accountRoleDTO.getRoleId())
+                .eq(Objects.nonNull(accountRoleDTO.getSupplierId()), AccountRole::getSupplierId, accountRoleDTO.getSupplierId())
+                .eq(StringUtils.isNotBlank(accountRoleDTO.getSystemName()), AccountRole::getSystemName, accountRoleDTO.getSystemName())
+                .one();
+        AccountRole data = AccountRoleConverter.INSTANCE.from(accountRoleDTO);
+        Role role = roleService.getById(data.getRoleId());
+        data.setRoleId(role.getId());
+        data.setRoleName(role.getName());
+        data.setRoleCode(role.getCode());
+        data.setSystemName(role.getSystemName());
+        Boolean result;
+        if(currentData == null) {
+            data.setCreateTime(LocalDateTime.now(ZoneId.of("Asia/Shanghai")));
+            result = accountRoleService.save(data);
+        } else {
+            data.setId(currentData.getId());
+            result = accountRoleService.updateById(data);
+        }
+
+        accountRoleDTO.setId(data.getId());
+        return result ? R.ok(accountRoleDTO, "添加成功") : R.failed(accountRoleDTO, "添加失败");
+    }
+
+    /**
+     * 修改用户角色关联表
+     * @param accountRoleDTO 用户角色关联表
+     * @return
+     */
+    @ApiOperation(value = "修改用户角色关联表", notes = "修改用户角色关联表")
+    @PutMapping("/accountRole")
+    public R<AccountRoleDTO> updateAccountRole(@RequestBody AccountRoleDTO accountRoleDTO) {
+        log.debug("REST request to update AccountRole : {}", accountRoleDTO);
+        if (accountRoleDTO.getId() == null) {
+            throw new BizException("id null");
+        }
+        AccountRole data = AccountRoleConverter.INSTANCE.from(accountRoleDTO);
+        boolean result = accountRoleService.updateById(data);
+        return result ? R.ok(accountRoleDTO, "修改成功") : R.failed(accountRoleDTO, "修改失败");
+    }
+
+    /**
+     * 根据查询条件获取分页数据
+     * @param queryDTO 用户角色关联表
+     * @return
+     */
+    @ApiOperation(value = "分页查询", notes = "分页查询")
+    @GetMapping("/accountRoles")
+    public R<IPage<AccountRoleDTO>> getAllAccountRoles(AccountRoleQueryDTO queryDTO) {
+        log.debug("REST request to get a page of AccountRoles");
+        String[] ascParameters = null;
+        String[] descParameters = null;
+        if(StringUtils.isNotBlank(queryDTO.getAscParameter())) {
+            ascParameters = new String[] {queryDTO.getAscParameter()};
+        }
+        if(StringUtils.isNotBlank(queryDTO.getDescParameter())) {
+            descParameters = new String[] {queryDTO.getDescParameter()};
+        }
+        IPage<AccountRoleDTO> result = accountRoleService.lambdaQuery()
+                .eq(StringUtils.isNotEmpty(queryDTO.getSystemName()), AccountRole::getSystemName, queryDTO.getSystemName())
+                .eq(Objects.nonNull(queryDTO.getAccountId()), AccountRole::getAccountId, queryDTO.getAccountId())
+                .eq(Objects.nonNull(queryDTO.getRoleId()), AccountRole::getRoleId, queryDTO.getRoleId())
+                .eq(StringUtils.isNotEmpty(queryDTO.getRoleName()), AccountRole::getRoleName, queryDTO.getRoleName())
+                .eq(Objects.nonNull(queryDTO.getSupplierId()), AccountRole::getSupplierId, queryDTO.getSupplierId())
+                .page(this.<AccountRole>getPage(queryDTO.getCursor(), queryDTO.getLimit(), queryDTO.getSearchCount(), ascParameters, descParameters))
+                .convert(dto -> AccountRoleConverter.INSTANCE.to(dto));
+        return R.ok(result, "查询列表成功");
+    }
+
+    /**
+     * 根据用户名获取权限列表-登录前检测可使用的客户端
+     * @param queryDTO 根据用户名获取权限列表-登录前检测可使用的客户端
+     * @return
+     */
+    @ApiOperation(value = "根据用户名获取权限列表", notes = "根据用户名获取权限列表")
+    @GetMapping("/open/accountRoleList")
+    public R<List<AccountRoleDTO>> getAllAccountRolesList(AccountRoleQueryDTO queryDTO) {
+        log.debug("REST request to get a page of getAllAccountRolesList {}", queryDTO);
+        if(StringUtils.isBlank(queryDTO.getUsername()) || Objects.isNull(queryDTO.getSystemNames())) {
+            return R.failed("请求参数错误");
+        }
+        List<AccountRole> result = accountRoleService.listAccountRoleByUserName(queryDTO);
+        if(result != null && result.size() > 0) {
+            return R.ok(AccountRoleConverter.INSTANCE.to(result));
+        } else {
+            return R.failed("当前用户无登录权限");
+        }
+    }
+
+    /**
+     * 根据ID获取用户角色关联表
+     * @param id id
+     * @return
+     */
+    @ApiOperation(value = "通过id查询", notes = "通过id查询")
+    @GetMapping("/accountRole/{id}")
+    public R<AccountRoleDTO> getAccountRole(@PathVariable Long id) {
+        log.debug("REST request to get AccountRole : {}", id);
+        AccountRole accountRole = accountRoleService.getById(id);
+        return accountRole == null ? R.failed("未查询到数据") : R.ok(AccountRoleConverter.INSTANCE.to(accountRole), "查询成功");
+    }
+
+    /**
+     * 通过id删除用户角色关联表
+     * @param id id
+     * @return
+     */
+    @ApiOperation(value = "通过id删除用户角色关联表", notes = "通过id删除用户角色关联表")
+    @DeleteMapping("/accountRole/{id}")
+    public R deleteAccountRole(@PathVariable Long id) {
+        log.debug("REST request to delete AccountRoles : {}", id);
+        return accountRoleService.removeByIdOriginal(id) > 0 ? R.ok("删除成功") : R.failed("删除失败");
+    }
+
+    /**
+     * 新增用户角色关联 feign
+     * @param accountRoleDTO 用户角色关联表
+     * @return
+     */
+    @ApiOperation(value = "新增用户角色关联表", notes = "新增用户角色关联表")
+    @PostMapping("/feign/accountRole")
+    public Boolean createAccountRoleFeign(@RequestBody AccountRoleDTO accountRoleDTO) {
+        log.debug("REST request to save AccountRole : {}", accountRoleDTO);
+        if (accountRoleDTO.getId() != null) {
+            throw new BizException("ID值需要为空");
+        }
+
+        return accountRoleService.createAccountRole(accountRoleDTO);
+    }
+
+    /**
+     * 删除用户角色关联 feign
+     * @param accountRoleDTO 用户角色关联
+     * @return
+     */
+    @ApiOperation(value = "删除用户角色关联", notes = "删除用户角色关联")
+    @PostMapping("/feign/accountRole/remove")
+    public Boolean removeAccountRoleFeign(@RequestBody AccountRoleDTO accountRoleDTO) {
+        log.debug("REST request to save AccountRole : {}", accountRoleDTO);
+        if (accountRoleDTO == null || accountRoleDTO.getAccountId() == null || accountRoleDTO.getRoleId() == null) {
+            throw new BizException("必须设置role");
+        }
+        accountRoleService.removeRoles(accountRoleDTO.getAccountId(), accountRoleDTO.getSupplierId(), accountRoleDTO.getRoleId());
+        return Boolean.TRUE;
+    }
+
+    /**
+     * 给单个账户重置多个角色 feign
+     * @param accountRoleDTOs 给单个账户重置多个角色
+     * @return
+     */
+    @ApiOperation(value = "给单个账户重置多个角色", notes = "给单个账户重置多个角色")
+    @PostMapping("/feign/accountRoles")
+    public Boolean createAccountRolesFeign(@RequestBody List<AccountRoleDTO> accountRoleDTOs) {
+        log.debug("REST request to save AccountRole : {}", accountRoleDTOs);
+        if (accountRoleDTOs == null || accountRoleDTOs.size() == 0) {
+            throw new BizException("必须设置role");
+        }
+        // 删除guest权限
+        accountRoleService.removeGuest(accountRoleDTOs.get(0).getAccountId(), accountRoleDTOs.get(0).getSupplierId(), accountRoleDTOs.get(0).getSystemName());
+        // 删除同样权限(因为要重设)
+        accountRoleService.removeRoles(accountRoleDTOs.get(0).getAccountId(), accountRoleDTOs.get(0).getSupplierId(), accountRoleDTOs.get(0).getRoleId());
+
+        for(AccountRoleDTO accountRoleDTO : accountRoleDTOs) {
+            Role role = roleService.getById(accountRoleDTO.getRoleId());
+            if(role == null) {
+                continue;
+            }
+            accountRoleDTO.setRoleName(role.getName());
+            accountRoleDTO.setRoleCode(role.getCode());
+            accountRoleDTO.setSystemName(role.getSystemName());
+            accountRoleDTO.setCreateTime(LocalDateTime.now(ZoneId.of("Asia/Shanghai")));
+        }
+        return accountRoleService.saveBatch(AccountRoleConverter.INSTANCE.from(accountRoleDTOs));
+    }
+
+    /**
+     * 查询账号的角色列表
+     * @param queryDTO 查询账号的角色列表
+     * @return
+     */
+    @ApiOperation(value = "查询账号的角色列表", notes = "查询账号的角色列表")
+    @PostMapping("/feign/accountAllRoles")
+    public List<AccountRoleDTO> getAllRolesFeign(@RequestBody AccountRoleQueryDTO queryDTO) {
+        List<AccountRole> accountRoles = accountRoleService.lambdaQuery()
+                .eq(StringUtils.isNotEmpty(queryDTO.getSystemName()), AccountRole::getSystemName, queryDTO.getSystemName())
+                .eq(Objects.nonNull(queryDTO.getAccountId()), AccountRole::getAccountId, queryDTO.getAccountId())
+                .eq(Objects.nonNull(queryDTO.getRoleId()), AccountRole::getRoleId, queryDTO.getRoleId())
+                .eq(Objects.nonNull(queryDTO.getSupplierId()), AccountRole::getSupplierId, queryDTO.getSupplierId())
+                .orderByDesc(AccountRole::getId)
+                .list();
+        return accountRoles == null || accountRoles.size() == 0 ? null : AccountRoleConverter.INSTANCE.to(accountRoles);
+    }
+}

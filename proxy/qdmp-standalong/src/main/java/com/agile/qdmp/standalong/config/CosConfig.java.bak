@@ -1,0 +1,21 @@
+package com.agile.qdmp.standalong.config;
+
+import lombok.Data;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.stereotype.Component;
+
+/**
+ * @Author: wenbinglei
+ * @Date: 2022/6/22 18:53
+ * @Description:
+ */
+@Data
+@Component
+@ConfigurationProperties(prefix = "cos")
+public class CosConfig {
+    private String baseUrl;
+    private String secretId;
+    private String secretKey;
+    private String regionName;
+    private String bucketName;
+}

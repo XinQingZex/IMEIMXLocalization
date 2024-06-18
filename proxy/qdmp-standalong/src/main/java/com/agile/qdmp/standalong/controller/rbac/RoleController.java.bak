@@ -1,0 +1,190 @@
+package com.agile.qdmp.standalong.controller.rbac;
+
+import com.agile.qdmp.standalong.model.dto.rbac.RoleDTO;
+import com.agile.qdmp.standalong.model.dto.rbac.query.RoleQueryDTO;
+import com.agile.qdmp.standalong.model.convert.rbac.RoleConverter;
+import com.agile.qdmp.standalong.model.entity.rbac.AccountRole;
+import com.agile.qdmp.standalong.model.entity.rbac.Role;
+import com.agile.qdmp.standalong.service.rbac.IAccountRoleService;
+import com.agile.qdmp.standalong.service.rbac.IRoleService;
+import com.agile.tem.common.core.controller.SuperController;
+import com.agile.tem.common.core.controller.exception.BizException;
+import com.agile.tem.common.core.util.R;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.Objects;
+
+
+/**
+ * 角色表 前端控制器
+ *
+ * @author wenbinglei
+ * @date 2021-03-23 18:01:22
+ */
+@Slf4j
+@RestController
+@RequestMapping("/api" )
+@Api(value = "role", tags = "角色表管理")
+public class RoleController extends SuperController {
+
+    private final IRoleService roleService;
+    private final IAccountRoleService accountRoleService;
+
+    public RoleController(IRoleService roleService, IAccountRoleService accountRoleService) {
+        this.roleService = roleService;
+        this.accountRoleService = accountRoleService;
+    }
+
+    /**
+     * 新增角色表
+     * @param roleDTO 角色表
+     * @return
+     */
+    @ApiOperation(value = "新增角色表", notes = "新增角色表")
+    @PostMapping("/role")
+    public R<RoleDTO> createRole(@RequestBody RoleDTO roleDTO) {
+        log.debug("REST request to save Role : {}", roleDTO);
+        if (roleDTO.getId() != null) {
+            throw new BizException("id exists");
+        }
+        Role data = RoleConverter.INSTANCE.from(roleDTO);
+        boolean result = roleService.save(data);
+        if(result) {
+            roleDTO.setId(data.getId());
+            return R.ok(roleDTO, "添加成功");
+        } else {
+            return R.failed(roleDTO, "添加失败");
+        }
+    }
+
+    /**
+     * 修改角色表
+     * @param roleDTO 角色表
+     * @return
+     */
+    @ApiOperation(value = "修改角色表", notes = "修改角色表")
+    @PutMapping("/role")
+    public R<RoleDTO> updateRole(@RequestBody RoleDTO roleDTO) {
+        log.debug("REST request to update Role : {}", roleDTO);
+        if (roleDTO.getId() == null) {
+            throw new BizException("id null");
+        }
+        Role data = RoleConverter.INSTANCE.from(roleDTO);
+        boolean result = roleService.updateById(data);
+        return result ? R.ok(roleDTO, "修改成功") : R.failed(roleDTO, "修改失败");
+    }
+
+    /**
+     * 根据查询条件获取分页数据
+     * @param queryDTO 角色表
+     * @return
+     */
+    @ApiOperation(value = "分页查询", notes = "分页查询")
+    @GetMapping("/roles")
+    public R<IPage<RoleDTO>> getAllRoles(RoleQueryDTO queryDTO) {
+        log.debug("REST request to get a page of Roles");
+        String[] ascParameters = null;
+        String[] descParameters = null;
+        if(StringUtils.isNotBlank(queryDTO.getAscParameter())) {
+            ascParameters = new String[] {queryDTO.getAscParameter()};
+        }
+        if(StringUtils.isNotBlank(queryDTO.getDescParameter())) {
+            descParameters = new String[] {queryDTO.getDescParameter()};
+        }
+        IPage<RoleDTO> result = roleService.lambdaQuery()
+                .like(StringUtils.isNotEmpty(queryDTO.getName()), Role::getName, queryDTO.getName())
+                .eq(StringUtils.isNotEmpty(queryDTO.getSystemName()), Role::getSystemName, queryDTO.getSystemName())
+                .in(Objects.nonNull(queryDTO.getSystemNames()), Role::getSystemName, queryDTO.getSystemNames())
+                .page(this.<Role>getPage(queryDTO.getCursor(), queryDTO.getLimit(), queryDTO.getSearchCount(), ascParameters, descParameters))
+                .convert(dto -> RoleConverter.INSTANCE.to(dto));
+        return R.ok(result, "查询列表成功");
+    }
+
+    /**
+     * 根据ID获取角色表
+     * @param id id
+     * @return
+     */
+    @ApiOperation(value = "通过id查询", notes = "通过id查询")
+    @GetMapping("/role/{id}")
+    public R<RoleDTO> getRole(@PathVariable Long id) {
+        log.debug("REST request to get Role : {}", id);
+        Role role = roleService.getById(id);
+        return role == null ? R.failed("未查询到数据") : R.ok(RoleConverter.INSTANCE.to(role), "查询成功");
+    }
+
+    /**
+     * 通过id删除角色表
+     * @param id id
+     * @return
+     */
+    @ApiOperation(value = "通过id删除角色表", notes = "通过id删除角色表")
+    @DeleteMapping("/role/{id}")
+    public R deleteRole(@PathVariable Long id) {
+        log.debug("REST request to delete Roles : {}", id);
+        return roleService.removeById(id) ? R.ok("删除成功") : R.failed("删除失败");
+    }
+
+    /**
+     * 查询系统的默认角色列表
+     * @param systemName
+     * @return
+     */
+    @GetMapping("/feign/roles/system")
+    @ApiOperation(value = "查询系统的默认角色列表", hidden = true)
+    public List<RoleDTO> getDefaultRolesBySystemName(@RequestParam(value="systemName") String systemName) {
+        List<Role> roles = roleService.lambdaQuery().eq(Role::getSystemName, systemName).eq(Role::getIsDefault, Boolean.TRUE).list();
+        List<RoleDTO> result = RoleConverter.INSTANCE.to(roles);
+        return result;
+    }
+
+    /**
+     * 根据查询条件获取分页数据 附带用户已经获得的权限
+     * @param queryDTO
+     * @return
+     */
+    @GetMapping("/roles/account")
+    @ApiOperation(value = "分页查询-附带用户已经获得的权限")
+    public R<IPage<RoleDTO>> getAllRolesWithAccountRoles(RoleQueryDTO queryDTO) {
+        log.debug("REST request to get a page of Roles");
+        if (queryDTO.getAccountId() == null) {
+            throw new BizException("必须设置AccountId");
+        }
+        String[] ascParameters = null;
+        String[] descParameters = null;
+        if(StringUtils.isNotBlank(queryDTO.getAscParameter())) {
+            ascParameters = new String[] {queryDTO.getAscParameter()};
+        }
+        if(StringUtils.isNotBlank(queryDTO.getDescParameter())) {
+            descParameters = new String[] {queryDTO.getDescParameter()};
+        }
+
+        List<AccountRole> accountRoles = accountRoleService.lambdaQuery().eq(AccountRole::getAccountId, queryDTO.getAccountId()).eq(StringUtils.isNotBlank(queryDTO.getSystemName()), AccountRole::getSystemName, queryDTO.getSystemName()).list();
+        IPage<RoleDTO> result = roleService.lambdaQuery()
+                .like(StringUtils.isNotEmpty(queryDTO.getName()), Role::getName, queryDTO.getName())
+                .eq(StringUtils.isNotEmpty(queryDTO.getSystemName()), Role::getSystemName, queryDTO.getSystemName())
+                .in(Objects.nonNull(queryDTO.getSystemNames()), Role::getSystemName, queryDTO.getSystemNames())
+                .page(this.<Role>getPage(queryDTO.getCursor(), queryDTO.getLimit(), queryDTO.getSearchCount(), ascParameters, descParameters))
+                .convert(dto -> {
+                    RoleDTO roleDTO = RoleConverter.INSTANCE.to(dto);
+                    if(accountRoles != null &&  accountRoles.size() > 0) {
+                        for(AccountRole accountRole  : accountRoles) {
+                            if(accountRole.getRoleId().longValue() == dto.getId().longValue()) {
+                                roleDTO.setIsGrant(true);
+                                roleDTO.setAccountRoleId(accountRole.getId());
+                            }
+                        }
+                    } else {
+                        roleDTO.setIsGrant(false);
+                    }
+                    return roleDTO;
+                });
+        return R.ok(result, "查询列表成功");
+    }
+}

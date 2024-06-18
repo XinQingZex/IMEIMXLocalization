@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.agile.qdmp.standalong.mapper.integrator.JobMapper">
+    <select id="listAll" resultType="com.alibaba.fastjson.JSONObject">
+        select j.*,p.PartName,p.PartNumber,p.PartRevisionLevel from Objects_WorkOrderLines j LEFT JOIN Objects_Parts p ON j.JobPartID=p.ID
+--         select j.* from Objects_WorkOrderLines j
+    </select>
+    <select id="listByQuery" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            j.*
+        FROM
+            Objects_WorkOrderLines j
+            LEFT JOIN Objects_Parts p ON j.JobPartID= p.ID
+        WHERE
+            j.IsDeleted = 0 AND
+            p.PartName=#{query.partName} and p.PartNumber=#{query.partNumber} and p.PartRevisionLevel=#{query.partRevision}
+    </select>
+</mapper>

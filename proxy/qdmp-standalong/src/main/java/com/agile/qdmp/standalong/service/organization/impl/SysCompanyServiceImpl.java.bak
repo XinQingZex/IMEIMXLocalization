@@ -1,0 +1,18 @@
+package com.agile.qdmp.standalong.service.organization.impl;
+
+import com.agile.qdmp.standalong.mapper.organization.SysCompanyMapper;
+import com.agile.qdmp.standalong.model.entity.organization.SysCompany;
+import com.agile.qdmp.standalong.service.organization.ISysCompanyService;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import org.springframework.stereotype.Service;
+
+/**
+ * 企业信息表 服务类
+ *
+ * @author wenbinglei
+ * @date 2022-04-26 16:16:45
+ */
+@Service
+public class SysCompanyServiceImpl extends ServiceImpl<SysCompanyMapper, SysCompany> implements ISysCompanyService {
+
+}

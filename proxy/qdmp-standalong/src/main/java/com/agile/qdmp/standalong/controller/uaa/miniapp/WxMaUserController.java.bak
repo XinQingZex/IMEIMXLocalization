@@ -1,0 +1,225 @@
+package com.agile.qdmp.standalong.controller.uaa.miniapp;
+
+import cn.binarywang.wx.miniapp.api.WxMaService;
+import cn.binarywang.wx.miniapp.bean.WxMaJscode2SessionResult;
+import cn.binarywang.wx.miniapp.bean.WxMaPhoneNumberInfo;
+import cn.binarywang.wx.miniapp.bean.WxMaUserInfo;
+import cn.binarywang.wx.miniapp.bean.scheme.WxMaGenerateSchemeRequest;
+import cn.binarywang.wx.miniapp.bean.urllink.CloudBase;
+import cn.binarywang.wx.miniapp.bean.urllink.GenerateUrlLinkRequest;
+import com.agile.tem.common.core.controller.exception.BizException;
+import com.agile.tem.common.core.util.R;
+import com.agile.qdmp.standalong.config.WxMaConfiguration;
+import com.agile.qdmp.standalong.utils.JsonUtils;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import me.chanjar.weixin.common.error.WxErrorException;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.time.DateUtils;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.Date;
+import java.util.HashMap;
+
+/**
+ * @Auther: wenbinglei
+ * @Date: 2019/9/3 20:09
+ * @Description:
+ */
+@Slf4j
+@AllArgsConstructor
+@RestController
+@RequestMapping("/api/open/ma/user/{appId}")
+@Api(value = "微信小程序接口", tags = "微信小程序接口")
+public class WxMaUserController {
+
+    /**
+     * 微信小程序登录接口
+     * @param appId
+     * @param code
+     * @return
+     */
+    @ApiOperation(value = "微信小程序登录接口")
+    @GetMapping("/login")
+    public R<String> login(@PathVariable String appId, @RequestParam String code) {
+        if (StringUtils.isBlank(code)) {
+            throw new BizException("缺少参数:code");
+        }
+
+        final WxMaService wxService = WxMaConfiguration.getMaService(appId);
+        try {
+            wxService.getAccessToken();
+            WxMaJscode2SessionResult session = wxService.getUserService().getSessionInfo(code);
+            String result = JsonUtils.toJson(session);
+            log.info("result : {}", result);
+            //TODO 可以增加自己的逻辑，关联业务相关数据
+            return R.ok(result);
+        } catch (WxErrorException e) {
+            log.error(e.getMessage(), e);
+            return R.failed(e.toString());
+        }
+    }
+
+    /**
+     * 获取用户信息接口
+     * @param appId
+     * @param map
+     * @return
+     */
+    @ApiOperation(value = "获取用户信息接口")
+    @PostMapping("/info")
+    public R<String> info(@PathVariable String appId, @RequestBody HashMap<String, String> map) {
+        final WxMaService wxService = WxMaConfiguration.getMaService(appId);
+
+//        // 用户信息校验
+//        if (!wxService.getUserService().checkUserInfo(map.get("sessionKey"), map.get("encryptedData"), map.get("signature"))) {
+////            return "user check failed";
+//            throw new IllegalArgumentException(String.format("参数请求错误", appId));
+//        }
+
+        if(!map.containsKey("sessionKey") || !map.containsKey("encryptedData") || !map.containsKey("iv")) {
+            throw new IllegalArgumentException(String.format("参数请求错误", appId));
+        }
+
+        // 解密用户信息
+        WxMaUserInfo userInfo = wxService.getUserService().getUserInfo(map.get("sessionKey"), map.get("encryptedData"), map.get("iv"));
+
+//        ResponseEntity.ok(JSONObject.toJSONString(userInfo));
+//        return JsonUtils.toJson(userInfo);
+        return R.ok(JsonUtils.toJson(userInfo));
+    }
+
+    /**
+     * 获取用户绑定手机号信息
+     * @param appId
+     * @param map
+     * @return
+     */
+    @ApiOperation(value = "获取用户绑定手机号信息")
+    @PostMapping("/phone")
+    public R<String> phone(@PathVariable String appId, @RequestBody HashMap<String, String> map) {
+        final WxMaService wxService = WxMaConfiguration.getMaService(appId);
+        if(!map.containsKey("code")) {
+            throw new IllegalArgumentException(String.format("参数请求错误", appId));
+        }
+        try {
+            WxMaPhoneNumberInfo phoneNoInfo = wxService.getUserService().getNewPhoneNoInfo(map.get("code"));
+            return R.ok(JsonUtils.toJson(phoneNoInfo));
+        } catch (WxErrorException e) {
+            throw new BizException(e.getMessage());
+        }
+    }
+
+//    /**
+//     * 发送短信
+//     * @param appId
+//     * @param map
+//     * @return
+//     */
+//    @ApiOperation(value = "发送短信")
+//    @PostMapping("/sendSms")
+//    public R<String> sendSms(@PathVariable String appId, @RequestBody HashMap<String, String> map) {
+//        final WxMaService wxService = WxMaConfiguration.getMaService(appId);
+//        log.info("phone params {}", map);
+//        if(!map.containsKey("sessionKey") || !map.containsKey("encryptedData") || !map.containsKey("iv")) {
+//            throw new IllegalArgumentException(String.format("参数请求错误", appId));
+//        }
+//        // https://developers.weixin.qq.com/miniprogram/dev/api-backend/open-api/cloudbase/cloudbase.sendSmsV2.html#method-http
+//        String url = "https://api.weixin.qq.com/tcb/sendsmsv2";
+//        JsonObject postData = new JsonObject();
+//        postData.addProperty("env", "weijia-z96te");
+//        postData.addProperty("url_link", "");
+//        postData.addProperty("template_id", "");
+//        List<String> params = new ArrayList<>();
+////        postData.addProperty("template_param_list", params);
+//        try {
+//            wxService.post(url, postData);
+//
+//
+//            GenerateUrlLinkRequest request = GenerateUrlLinkRequest.builder().path("").build();
+//            wxService.getLinkService().generateShortLink(request);
+//            wxService.getLinkService().generateUrlLink(request);
+//
+//            WxMaGenerateSchemeRequest schemeRequest = WxMaGenerateSchemeRequest.newBuilder().build();
+//            wxService.getWxMaSchemeService().generate(schemeRequest);
+//
+//        } catch (WxErrorException e) {
+//            e.printStackTrace();
+//        }
+//
+//
+//
+//        // 解密
+//        WxMaPhoneNumberInfo phoneNoInfo = wxService.getUserService().getPhoneNoInfo(map.get("sessionKey"), map.get("encryptedData"), map.get("iv"));
+//        return R.ok(JsonUtils.toJson(phoneNoInfo));
+//    }
+
+    /**
+      * URL Scheme generate
+      * @param appId
+      * @param map
+      * @return
+      */
+    @ApiOperation(value = "URL Scheme generate")
+    @PostMapping("/generate/url/scheme")
+    public R<String> generateURLScheme(@PathVariable String appId, @RequestBody HashMap<String, String> map) {
+        final WxMaService wxService = WxMaConfiguration.getMaService(appId);
+        log.info("generateURLScheme params {}", map);
+        if(!map.containsKey("query")) {
+            throw new BizException(String.format("参数请求错误", appId));
+        }
+        //  20分钟后失效
+//        final Date date = DateUtils.addMinutes(new Date(), 20);
+//        final long expireTime = date.getTime() / 1000;
+        try {
+            WxMaGenerateSchemeRequest.JumpWxa jumpWxa = WxMaGenerateSchemeRequest.JumpWxa.newBuilder().path("/pages/index/index").query(map.get("query")).build();
+            if(map.containsKey("path")) {
+                jumpWxa.setPath(map.get("path"));
+            }
+            if(map.containsKey("env_version")) {
+                jumpWxa.setEnvVersion(map.get("env_version"));
+            }
+            WxMaGenerateSchemeRequest schemeRequest = WxMaGenerateSchemeRequest.newBuilder().jumpWxa(jumpWxa).isExpire(true).expireType(1).expireInterval(1).build();
+            String result = wxService.getWxMaSchemeService().generate(schemeRequest);
+            return R.ok(JsonUtils.toJson(result));
+        } catch (WxErrorException e) {
+            throw new BizException(e.getMessage());
+        }
+    }
+
+    /**
+     * URL Link generate
+     * @param appId
+     * @param map
+     * @return
+     */
+    @ApiOperation(value = "URL Link generate")
+    @PostMapping("/generate/url/link")
+    public R<String> generateURLLink(@PathVariable String appId, @RequestBody HashMap<String, String> map) {
+        final WxMaService wxService = WxMaConfiguration.getMaService(appId);
+        log.info("generateURLLink params {}", map);
+        if(!map.containsKey("query")) {
+            throw new BizException(String.format("参数请求错误", appId));
+        }
+        //  20分钟后失效
+        final Date date = DateUtils.addMinutes(new Date(), 20);
+        final Integer expireTime = (int) (date.getTime() / 1000);
+        try {
+            CloudBase cloudBase = CloudBase.builder().env("weijia-z96te").resourceAppid(appId).build();
+
+            GenerateUrlLinkRequest linkRequest = GenerateUrlLinkRequest.builder().cloudBase(cloudBase).path("/pages/index/index").query(map.get("query")).isExpire(true).expireType(0).expireTime(expireTime).build();
+            if(map.containsKey("path")) {
+                linkRequest.setPath(map.get("path"));
+            }
+            if(map.containsKey("env_version")) {
+                linkRequest.setEnvVersion(map.get("env_version"));
+            }
+            String result = wxService.getLinkService().generateUrlLink(linkRequest);
+            return R.ok(JsonUtils.toJson(result));
+        } catch (WxErrorException e) {
+            throw new BizException(e.getMessage());
+        }
+    }
+}

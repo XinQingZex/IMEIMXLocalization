@@ -1,0 +1,14 @@
+package com.agile.qdmp.standalong.service.organization;
+
+import com.agile.qdmp.standalong.model.entity.organization.Department;
+import com.baomidou.mybatisplus.extension.service.IService;
+
+/**
+ * 部门表
+ *
+ * @author wenbinglei
+ * @date 2022-05-20 21:02:37
+ */
+public interface IDepartmentService extends IService<Department> {
+
+}

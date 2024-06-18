@@ -1,0 +1,34 @@
+package com.agile.qdmp.standalong.model.dto.account.query;
+
+import com.agile.tem.common.core.model.BaseQueryDTO;
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
+import lombok.Data;
+
+/**
+ * 社会化用户表
+ *
+ * @author wenbinglei
+ * @date 2021-03-23 18:00:08
+ */
+@Data
+@ApiModel(value = "", description = "社会化用户表")
+public class SocialInfoQueryDTO extends BaseQueryDTO {
+    private static final long serialVersionUID = 1L;
+
+    /**
+     * 账号ID
+     */
+    @ApiModelProperty(value = "账号ID")
+    private Long accountId;
+    /**
+     * 第三方用户来源
+     */
+    @ApiModelProperty(value = "第三方用户来源")
+    private String source;
+    /**
+     * 状态, normal=正常,lock=锁定
+     */
+    @ApiModelProperty(value = "状态, normal=正常,lock=锁定")
+    private String state;
+}

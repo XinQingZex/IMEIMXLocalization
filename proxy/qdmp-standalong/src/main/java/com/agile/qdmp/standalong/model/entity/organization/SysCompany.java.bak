@@ -1,0 +1,112 @@
+package com.agile.qdmp.standalong.model.entity.organization;
+
+import com.agile.tem.common.core.model.BaseModel;
+import com.baomidou.mybatisplus.annotation.TableName;
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+
+/**
+ * 企业信息表
+ *
+ * @author wenbinglei
+ * @date 2022-04-26 16:16:45
+ */
+@Data
+@TableName("erp_company")
+@EqualsAndHashCode(callSuper = true)
+@ApiModel(value = "Company", description = "企业信息表")
+public class SysCompany extends BaseModel {
+    private static final long serialVersionUID = 1L;
+    /**
+     * 用户id
+     */
+    @ApiModelProperty(value = "用户id")
+    private Long accountId;
+    /**
+     * 图标
+     */
+    @ApiModelProperty(value = "图标")
+    private String logo;
+    /**
+     * 编码
+     */
+    @ApiModelProperty(value = "编码")
+    private String code;
+    /**
+     * 名称
+     */
+    @ApiModelProperty(value = "名称")
+    private String name;
+    /**
+     * 用户名
+     */
+    @ApiModelProperty(value = "用户名")
+    private String contactName;
+    /**
+     * 电话
+     */
+    @ApiModelProperty(value = "电话")
+    private String contactPhone;
+    /**
+     * 手机号
+     */
+    @ApiModelProperty(value = "手机号")
+    private String contactMobile;
+    /**
+     * 省
+     */
+    @ApiModelProperty(value = "省")
+    private String province;
+    /**
+     * 市
+     */
+    @ApiModelProperty(value = "市")
+    private String city;
+    /**
+     * 区
+     */
+    @ApiModelProperty(value = "区")
+    private String district;
+    /**
+     * 地址
+     */
+    @ApiModelProperty(value = "地址")
+    private String address;
+    /**
+     * 纬度
+     */
+    @ApiModelProperty(value = "纬度")
+    private Double latitude;
+    /**
+     * 经度
+     */
+    @ApiModelProperty(value = "经度")
+    private Double longitude;
+    /**
+     * 审核状态 自动入库无公司名称 未审核 已审核
+     */
+    @ApiModelProperty(value = "审核状态 自动入库无公司名称 未审核 已审核")
+    private String state;
+    /**
+     * 拒绝原因
+     */
+    @ApiModelProperty(value = "拒绝原因")
+    private String refuseReason;
+    /**
+     * 创建者ID
+     */
+    @ApiModelProperty(value = "创建者ID")
+    private Long creatorId;
+    /**
+     * 创建者名称
+     */
+    @ApiModelProperty(value = "创建者名称")
+    private String creator;
+    /**
+     * 创建时间
+     */
+    @ApiModelProperty(value = "创建时间")
+    private Integer createTime;
+}

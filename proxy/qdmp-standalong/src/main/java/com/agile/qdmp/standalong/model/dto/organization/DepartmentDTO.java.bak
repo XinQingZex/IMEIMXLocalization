@@ -1,0 +1,58 @@
+package com.agile.qdmp.standalong.model.dto.organization;
+
+import com.agile.tem.common.core.model.BaseDTO;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+
+/**
+ * 部门表
+ *
+ * @author wenbinglei
+ * @date 2022-05-20 21:02:37
+ */
+@Data
+@NoArgsConstructor
+@EqualsAndHashCode(callSuper = false)
+@ApiModel(value = "DepartmentDTO", description = "部门表")
+public class DepartmentDTO extends BaseDTO {
+    private static final long serialVersionUID = 1L;
+//    @FiledDesensitization(value = MaskingTypeEnum.FIXED_PHONE)
+//    @FiledDesensitization(retainLeft=2, retainRight = 3, padStr = "@", separator = "#")
+    /**
+     * 企业id
+     */
+    @ApiModelProperty(value = "企业id")
+    @JsonSerialize(using= ToStringSerializer.class)
+    private Long companyId;
+    /**
+     * 上级ID
+     */
+    @ApiModelProperty(value = "上级ID")
+    @JsonSerialize(using= ToStringSerializer.class)
+    private Long parentId;
+    /**
+     * 上级名称
+     */
+    @ApiModelProperty(value = "上级名称")
+    private String parentName;
+    /**
+     * 名称
+     */
+    @ApiModelProperty(value = "名称")
+    private String name;
+    /**
+     * 创建时间
+     */
+    @ApiModelProperty(value = "创建时间")
+    private Integer createTime;
+    /**
+     * 状态 有效 无效
+     */
+    @ApiModelProperty(value = "状态 有效 无效")
+    private Boolean state;
+}

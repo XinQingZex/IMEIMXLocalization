@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.agile.qdmp.standalong.mapper.integrator.PartMapper">
+
+    <!--<select id="listByQuery" resultType="Part">-->
+        <!--SELECT-->
+            <!--part_name,-->
+            <!--part_number,-->
+            <!--part_revision_level,-->
+            <!--customer_name,-->
+            <!--max(sample_total) as sample_total,-->
+            <!--max(job_total) as job_total,-->
+            <!--min(id) as id-->
+        <!--FROM-->
+            <!--im_part-->
+        <!--WHERE-->
+            <!--deleted = 0-->
+            <!--AND is_deleted =0-->
+            <!--<if test="query.customerGuid != null and query.customerGuid != ''">-->
+                <!--AND customer_guid = #{query.customerGuid}-->
+            <!--</if>-->
+            <!--group by part_name,part_number,part_revision_level,customer_name-->
+    <!--</select>-->
+    <!--<select id="listByQuery" resultType="Part">-->
+        <!--SELECT-->
+        <!--a.*-->
+        <!--FROM-->
+        <!--im_part a-->
+        <!--INNER JOIN (-->
+        <!--SELECT-->
+        <!--part_name,-->
+        <!--part_number,-->
+        <!--part_revision_level,-->
+        <!--min( id ) AS id-->
+        <!--FROM-->
+        <!--im_part-->
+        <!--WHERE-->
+        <!--deleted = 0-->
+        <!--AND is_deleted = 0-->
+        <!--<if test="query.customerGuid != null and query.customerGuid != ''">-->
+            <!--AND customer_guid = #{query.customerGuid}-->
+        <!--</if>-->
+        <!--GROUP BY-->
+        <!--part_name,-->
+        <!--part_number,-->
+        <!--part_revision_level-->
+        <!--) AS b ON a.id = b.id-->
+    <!--</select>-->
+    <!--<select id="listByQuery" resultType="com.alibaba.fastjson.JSONObject">-->
+        <!--SELECT-->
+        <!--a.ID,-->
+        <!--a.PartName,-->
+        <!--a.PartNumber,-->
+        <!--a.PartRevisionLevel,-->
+        <!--a.GlobalID-->
+        <!--FROM-->
+        <!--Objects_Parts a-->
+        <!--INNER JOIN (-->
+        <!--SELECT-->
+        <!--PartName,-->
+        <!--PartNumber,-->
+        <!--PartRevisionLevel,-->
+        <!--min( id ) AS id-->
+        <!--FROM-->
+        <!--Objects_Parts-->
+        <!--WHERE-->
+        <!--IsDeleted = 0 AND PartIsDeleted = 0-->
+        <!--<if test="query.customerId != null and query.customerId != ''">-->
+            <!--AND PartCustomerID = #{query.customerId}-->
+        <!--</if>-->
+        <!--<if test="query.keyWord != null and query.keyWord != ''">-->
+          <!--and (p.PartNumber like '%'+#{query.keyWord}+'%' or p.PartName like '%'+#{query.keyWord}+'%' or j.JobNumber like '%'+#{query.keyWord}+'%')-->
+        <!--</if>-->
+        <!--GROUP BY-->
+        <!--PartName,-->
+        <!--PartNumber,-->
+        <!--PartRevisionLevel	) AS b ON a.id = b.id-->
+    <!--</select>-->
+
+    <select id="listByQuery" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+        p.PartName,
+        p.PartNumber,
+        p.PartRevisionLevel,
+        MIN ( ID ) AS ID,
+        MIN ( PartCustomerID ) AS PartCustomerID
+        FROM
+        Objects_Parts p
+        WHERE
+        p.IsDeleted = 0
+        AND p.PartIsDeleted = 0
+          <if test='query.keyWord!= null and query.keyWord !="" '>
+                AND (p.PartNumber like '%'+#{query.keyWord}+'%' or p.PartName like '%'+#{query.keyWord}+'%')
+            </if>
+            <if test="query.customerId != null and query.customerId != ''">
+                AND p.PartCustomerID = #{query.customerId}
+            </if>
+            <if test="query.projectId != null and query.projectId != ''">
+                AND p.PartProjectID = #{query.projectId}
+            </if>
+        GROUP BY
+        p.PartName,
+        p.PartNumber,
+        p.PartRevisionLevel
+        order by p.PartName,p.PartNumber,p.PartRevisionLevel offset 0 rows fetch next 20 rows only
+    </select>
+</mapper>

@@ -1,0 +1,98 @@
+logging:
+  level:
+    # ROOT: INFO
+#    com.agile.qdmp.standalong: INFO
+    com.agile.qdmp.standalong: DEBUG
+    dao: debug
+    org:
+      mybatis: debug
+server:
+#  port: ${server.port:8081}
+  port: 8081
+
+spring:
+  datasource:
+#    driver-class-name: org.h2.Driver
+#    schema: classpath:sql/db_qdmp.sql
+#    data: classpath:sql/data.sql
+##    url: jdbc:h2:D:/mysoft/h2-2022-06-13/h2/my_data/java_test;MODE=MySQL;OLD_INFORMATION_SCHEMA=TRUE
+#    url: jdbc:h2:${QDMP_HOME:D:/qdmp_data}/qdmp_db/qdmp;MODE=MySQL
+#    username: qdmp
+#    password: qdmp@123
+##    initialization-mode: never
+#    url: jdbc:sqlserver://localhost;DatabaseName=db_zh;Trusted_Connection=True
+#    url: jdbc:sqlserver://localhost;Database=master;databaseName=HQA_CDB
+#    url: jdbc:sqlserver://${DB_URL}
+#    url: jdbc:sqlserver://localhost;databaseName=test_dev_1;Trusted_Connection=True
+    #url: jdbc:sqlserver://AGILETECH04\HIGHQA17;databaseName=HQA_CDB;Trusted_Connection=True
+    url: jdbc:sqlserver://localhost;databaseName=HQA_CDB;Trusted_Connection=True
+    type: com.alibaba.druid.pool.DruidDataSource
+    driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver
+    username: sa
+    password: 123456
+#    username: ${DB_USERNAME:sa}
+#    password: ${DB_PASSWORD:123456}
+#    Trusted_Connection: YES
+    initialSize: 5
+    minIdle: 5
+    maxActive: 20
+    maxWait: 60000
+    timeBetweenEvictionRunsMillis: 60000
+    minEvictableIdleTimeMillis: 300000
+    validationQuery: SELECT 1 FROM DUAL
+    testWhileIdle: true
+    testOnBorrow: false
+    testOnReturn: false
+    poolPreparedStatements: true
+    maxPoolPreparedStatementPerConnectionSize: 20
+    spring.datasource.filters: stat,wall,log4j
+    connectionProperties: druid.stat.mergeSql=true;druid.stat.slowSqlMillis=5000
+
+# ===================================================================
+# hx specific properties
+# ===================================================================
+hx:
+  http:
+    version: V_1_1 # To use HTTP/2 you will need to activate TLS (see application-tls.yml)
+  # CORS is only enabled by default with the "dev" profile, so BrowserSync can access the API
+  cors:
+    allowed-origins: "*"
+    allowed-methods: "*"
+    allowed-headers: "*"
+    exposed-headers: "Authorization,Link,X-Total-Count"
+    allow-credentials: true
+    max-age: 1800
+  security:
+    client-authorization:
+      access-token-uri: http://weijia-uaa/oauth/token
+      token-service-id: umc-uaa
+      client-id: umc-uaa
+      client-secret: umc-uaa@
+uaa:
+  key-store:
+    name: config/tls/douyouyu_keystore.p12
+    password: wenbingleiA1
+    alias: douyouyu-uaa
+  web-client-configuration:
+    # Access Token is valid for 5 mins
+    access-token-validity-in-seconds: 290
+    # Refresh Token is valid for 7 days
+    refresh-token-validity-in-seconds-for-remember-me: 2592000
+    client-id: web-weijia-uaa
+    secret: hyzh-web-weijia-uaa@
+# ===================================================================
+# Application specific properties
+# ===================================================================
+opencv:
+  lib:
+    path: ${opencv.lib.path}
+#    path: classpath:opencv/haarcascade_frontalface_alt.xml
+#    path: D:\opencv\opencv\sources\data\haarcascades\haarcascade_frontalface_alt.xml
+
+# mybatis
+mybatis-plus:
+#  type-enums-package: com.agile.qdmp.standalong.client.enums
+  type-aliases-package: com.agile.qdmp.standalong.model.entity,com.agile.qdmp.standalong.model.dto
+# application:
+swagger:
+  title: UMC-UAA 认证功能模块

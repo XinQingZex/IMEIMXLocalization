@@ -1,0 +1,52 @@
+server:
+  port: 8080
+  compression:
+    enabled: true
+    mime-types: text/html,text/xml,text/plain,text/css, application/javascript, application/json
+    min-response-size: 1024
+
+spring:
+  main:
+    allow-bean-definition-overriding: true
+  application:
+    name: #artifactId#
+  profiles:
+    active: #spring.profiles.active#
+  resources:
+    static-locations: file:${QDMP_HOME:D:/qdmp_data}
+
+sys:
+  file-directory: ${QDMP_HOME:D:/qdmp_data}/file/
+  server-uri: ${QDMP_SERVER:http://localhost:1015}
+  user-name: ${QDMP_USER_NAME:Admin}
+  password: ${QDMP_USER_PWD:Admin}
+
+logging:
+  file: ${QDMP_HOME:D:/qdmp_data}/qdmp-logs/${spring.application.name}/root.log
+
+mybatis-plus:
+  mapper-locations: classpath:mapper/*Mapper.xml
+  # 实体扫描，多个package用逗号或者分号分隔
+  # type-enums-package: com.hyzh.cim.community.client.enums
+  # type-aliases-package: com.hyzh.cim.community.model.entity,com.hyzh.cim.community.client.dto
+  global-config:
+    banner: false
+    # super-mapper-class: com.hyzh.cim.common.core.mapper.BaseMapper
+    # 数据库相关配置
+    db-config:
+      #主键类型  AUTO:"数据库ID自增", INPUT:"用户输入ID",ID_WORKER:"全局唯一ID (数字类型唯一ID)", UUID:"全局唯一ID UUID";
+      id-type: assign_id
+      # id-type: id_worker
+      #字段策略 IGNORED:"忽略判断",NOT_NULL:"非 NULL 判断"),NOT_EMPTY:"非空判断"
+      field-strategy: not_empty
+      #驼峰下划线转换
+      column-underline: true
+      #数据库大写下划线转换
+      #capital-mode: true
+      #逻辑删除配置
+      logic-delete-value: 1 # 逻辑已删除值(默认为 1)
+      logic-not-delete-value: 0 # 逻辑未删除值(默认为 0)
+  # 原生配置
+  configuration:
+    map-underscore-to-camel-case: true
+    cache-enabled: false

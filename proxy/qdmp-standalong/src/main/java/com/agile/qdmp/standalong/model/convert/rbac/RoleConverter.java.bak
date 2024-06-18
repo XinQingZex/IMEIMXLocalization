@@ -1,0 +1,18 @@
+package com.agile.qdmp.standalong.model.convert.rbac;
+
+import com.agile.qdmp.standalong.model.dto.rbac.RoleDTO;
+import com.agile.qdmp.standalong.model.entity.rbac.Role;
+import com.agile.tem.common.core.model.Convert;
+import org.mapstruct.Mapper;
+import org.mapstruct.factory.Mappers;
+
+/**
+ * 角色表 数据转换
+ *
+ * @author wenbinglei
+ * @date 2021-03-23 18:01:22
+ */
+@Mapper
+public interface RoleConverter extends Convert<Role, RoleDTO> {
+    RoleConverter INSTANCE = Mappers.getMapper(RoleConverter.class);
+}

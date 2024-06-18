@@ -1,0 +1,717 @@
+package com.agile.qdmp.standalong.service.integrator.impl;
+
+import com.agile.qdmp.standalong.config.SysConfig;
+import com.agile.qdmp.standalong.mapper.integrator.ImApiRecordMapper;
+import com.agile.qdmp.standalong.model.dto.integrator.*;
+import com.agile.qdmp.standalong.model.entity.integrator.*;
+import com.agile.qdmp.standalong.service.integrator.*;
+import com.agile.qdmp.standalong.tool.api.IMService;
+import com.agile.qdmp.standalong.tool.error.IMErrorException;
+import com.agile.tem.common.core.util.R;
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.stereotype.Service;
+import org.springframework.util.DigestUtils;
+
+import javax.annotation.Resource;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+
+/**
+ * IM_API_RECORD 服务类
+ *
+ * @author hyzh code generator
+ * @date 2022-09-19 09:56:55
+ */
+@Service
+@Slf4j
+public class ImApiRecordServiceImpl extends ServiceImpl<ImApiRecordMapper, ImApiRecord> implements IImApiRecordService {
+    private final static String ACCESS_TOKEN_KEY = "AccessToken";
+    private final static String PART_STR = "part";
+    private final static String JOB_STR = "job";
+    private final static String LOT_STR = "lot";
+    private final static String SAMPLE_STR = "sample";
+    private final static String DIM_STR = "dim";
+    private final static String GAGE_STR = "gage";
+    private final static String COMPANY_STR = "company";
+    private final static String DRAWING_STR = "drawing";
+    private final static String RESULT_STR = "result";
+    private final static String RECEIVER_STR = "receiver";
+    private final static String OPERATION_STR = "operation";
+    private final static String NCR_STR = "ncr";
+    private final static String CONTACT_STR = "contact";
+    private final static String PROCEDURE_STR = "procedure";
+    private final static String INSP_CENTER_STR = "inspCenter";
+    private final static String EMPTY_STR = "";
+    private final static String DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSS";
+    private final static String PAGE_KEY = "Page";
+    private final static String NEXT_PAGE_KEY = "NextPage";
+    private final static String PART_URI = "/api/parts/list";
+    private final static String JOB_URI = "/api/jobs/list";
+    private final static String LOT_URI = "/api/lots/list";
+    private final static String SAMPLE_URI = "/api/samples/list";
+    private final static String DIM_URI = "/api/dims/list";
+    private final static String RESULT_URI = "/api/results/list";
+    private final static String COMPANY_URI = "/api/companies/list";
+    private final static String DRAWING_URI = "/api/drawings/list";
+    private final static String GAGE_URI = "/api/gages/list";
+    private final static String RECEIVER_URI = "/api/receivers/list";
+    private final static String OPERATION_URI = "/api/operations/list";
+    private final static String NCR_URI = "/api/ncr/list";
+    private final static String CONTACT_URI = "/api/contacts/list";
+    private final static String PROCEDURE_URI = "/api/procedures/list";
+    private final static String INSP_CENTER_URI = "/api/inspcenters/list";
+    @Resource
+    private IMService imService;
+    @Resource
+    private IImServerService imServerService;
+    @Resource
+    private IDrawingService drawingService;
+    @Resource
+    private IPartService partService;
+    @Resource
+    private IJobService jobService;
+    @Resource
+    private ILotService lotService;
+    @Resource
+    private ISampleService sampleService;
+    @Resource
+    private IDimensionService dimensionService;
+    @Resource
+    private IResultService resultService;
+    @Resource
+    private ICompanyService companyService;
+    @Resource
+    private IGageService gageService;
+    @Resource
+    private IGageCategoryService gageCategoryService;
+    @Resource
+    private ICharacterDesignatorService characterDesignatorService;
+    @Resource
+    private IDimensionTypeService dimensionTypeService;
+    @Resource
+    private IReceiverService receiverService;
+    @Resource
+    private IOperationService operationService;
+    @Resource
+    private INcrService ncrService;
+    @Resource
+    private IContactService contactService;
+    @Resource
+    private IProcedureService procedureService;
+    @Resource
+    private IInspCenterService inspCenterService;
+    @Resource
+    private SysConfig sysConfig;
+
+
+    @Override
+    public R<JSONObject> handle(RequestDTO params) {
+        try {
+            String apiResult = imService.post(sysConfig.getServerUri() + params.getApiUri(), params.getToken(), params.getData());
+            JSONObject res = JSONObject.parseObject(apiResult);
+            if(params.getApiUri().equalsIgnoreCase("/api/jobs/set")) {
+                JSONObject partParams = new JSONObject();
+                partParams.put("PartGUIDs", res.getJSONObject("OutputJob").getString("PartGUID"));
+                synchronizeServerData(params.getServerId(), sysConfig.getServerUri(), res.getString(ACCESS_TOKEN_KEY),"part", partParams);
+                partParams.put("PartGUID", res.getJSONObject("OutputJob").getString("PartGUID"));
+                synchronizeServerData(params.getServerId(), sysConfig.getServerUri(), res.getString(ACCESS_TOKEN_KEY),"drawing", partParams);
+                synchronizeServerData(params.getServerId(), sysConfig.getServerUri(), res.getString(ACCESS_TOKEN_KEY),"sample", partParams);
+                synchronizeServerData(params.getServerId(), sysConfig.getServerUri(), res.getString(ACCESS_TOKEN_KEY),"dim", partParams);
+                JSONObject lotParams = new JSONObject();
+                lotParams.put("JobGUID", res.getJSONObject("OutputJob").getString("GUID"));
+                synchronizeServerData(params.getServerId(), sysConfig.getServerUri(), res.getString(ACCESS_TOKEN_KEY),"lot", lotParams);
+                synchronizeServerData(params.getServerId(), sysConfig.getServerUri(), res.getString(ACCESS_TOKEN_KEY),"result", lotParams);
+            }
+
+            return R.ok(res);
+        } catch (IMErrorException e) {
+            log.error(e.getMessage());
+            return R.failed(e.getMessage());
+        }
+    }
+
+
+    @Async
+    @Override
+    public Boolean synchronizeServerData(Long serverId, String serverUri, String accessToken, String type, JSONObject params) {
+        Integer startTime = (int) System.currentTimeMillis() / 1000;
+        ImServer server = imServerService.getById(serverId);
+        if(server == null) {
+            server = new ImServer();
+            server.setId(serverId);
+            server.setName("LOCAL");
+            server.setUpdateStatus(true);
+            server.setUpdateTime((int) (System.currentTimeMillis() / 1000));
+            imServerService.save(server);
+        } else {
+            if(server.getUpdateStatus()) {
+                return false;
+            }
+            server.setId(serverId);
+            server.setUpdateStatus(true);
+            server.setUpdateTime((int) (System.currentTimeMillis() / 1000));
+            imServerService.updateById(server);
+        }
+
+        Boolean isSuccess = true;
+        if(StringUtils.isBlank(type) || type.equalsIgnoreCase(PART_STR)) {
+            isSuccess = synchronizeIM(serverId, accessToken, serverUri, PART_URI, params);
+            buildApiRecord(PART_STR, serverUri);
+        }
+        if(isSuccess && (StringUtils.isBlank(type) || type.equalsIgnoreCase(INSP_CENTER_STR))) {
+            isSuccess = synchronizeIM(serverId, accessToken, serverUri, INSP_CENTER_URI, params);
+            buildApiRecord(INSP_CENTER_STR, serverUri);
+        }
+        if(isSuccess && (StringUtils.isBlank(type) || type.equalsIgnoreCase(PROCEDURE_STR))) {
+            isSuccess = synchronizeIM(serverId, accessToken, serverUri, PROCEDURE_URI, params);
+            buildApiRecord(PROCEDURE_STR, serverUri);
+        }
+        if(isSuccess && (StringUtils.isBlank(type) || type.equalsIgnoreCase(OPERATION_STR))) {
+            isSuccess = synchronizeIM(serverId, accessToken, serverUri, OPERATION_URI, params);
+            buildApiRecord(OPERATION_STR, serverUri);
+        }
+        if(isSuccess && (StringUtils.isBlank(type) || type.equalsIgnoreCase(JOB_STR)) ) {
+            isSuccess = synchronizeIM(serverId, accessToken, serverUri, JOB_URI, params);
+            buildApiRecord(JOB_STR, serverUri);
+            normalizeIMServerData(JOB_STR);
+        }
+        if(isSuccess && (StringUtils.isBlank(type) || type.equalsIgnoreCase(COMPANY_STR)) ) {
+            isSuccess = synchronizeIM(serverId, accessToken, serverUri, COMPANY_URI, params);
+            buildApiRecord(COMPANY_STR, serverUri);
+            normalizeIMServerData(COMPANY_STR);
+        }
+        if(isSuccess && (StringUtils.isBlank(type) || type.equalsIgnoreCase(LOT_STR)) ) {
+            isSuccess = synchronizeIM(serverId, accessToken, serverUri, LOT_URI, params);
+            buildApiRecord(LOT_STR, serverUri);
+        }
+        if(isSuccess && (StringUtils.isBlank(type) || type.equalsIgnoreCase(SAMPLE_STR)) ) {
+            isSuccess = synchronizeIM(serverId, accessToken, serverUri, SAMPLE_URI, params);
+            buildApiRecord(SAMPLE_STR, serverUri);
+        }
+//        if(isSuccess && (StringUtils.isBlank(type) || type.equalsIgnoreCase(DRAWING_STR)) ) {
+//            isSuccess = synchronizeIM(serverId, accessToken, serverUri, DRAWING_URI, params);
+//            buildApiRecord(DRAWING_STR, serverUri);
+//        }
+        if(isSuccess && (StringUtils.isBlank(type) || type.equalsIgnoreCase(DIM_STR)) ) {
+            isSuccess = synchronizeIM(serverId, accessToken, serverUri, DIM_URI, params);
+            buildApiRecord(DIM_STR, serverUri);
+            normalizeIMServerData(DIM_STR);
+            normalizeIMServerData("designator");
+            normalizeIMServerData("dimType");
+            normalizeDimData(serverUri, PROCEDURE_URI, accessToken);
+        }
+        if(isSuccess && (StringUtils.isBlank(type) || type.equalsIgnoreCase(RESULT_STR)) ) {
+            isSuccess = synchronizeIM(serverId, accessToken, serverUri, RESULT_URI, params);
+            buildApiRecord(RESULT_STR, serverUri);
+        }
+
+        if(isSuccess && (StringUtils.isBlank(type) || type.equalsIgnoreCase(GAGE_STR))) {
+            isSuccess = synchronizeIM(serverId, accessToken, serverUri, GAGE_URI, params);
+            gageCategoryService.normalizeGageCategoryData(serverId);
+            buildApiRecord(GAGE_STR, serverUri);
+        }
+
+        if(isSuccess && (StringUtils.isBlank(type) || type.equalsIgnoreCase(RECEIVER_STR))) {
+            isSuccess = synchronizeIM(serverId, accessToken, serverUri, RECEIVER_URI, params);
+            buildApiRecord(RECEIVER_STR, serverUri);
+        }
+        if(isSuccess && (StringUtils.isBlank(type) || type.equalsIgnoreCase(NCR_STR))) {
+            isSuccess = synchronizeIM(serverId, accessToken, serverUri, NCR_URI, params);
+            buildApiRecord(NCR_STR, serverUri);
+        }
+        if(isSuccess && (StringUtils.isBlank(type) || type.equalsIgnoreCase(CONTACT_STR))) {
+            isSuccess = synchronizeIM(serverId, accessToken, serverUri, CONTACT_URI, params);
+            buildApiRecord(CONTACT_STR, serverUri);
+        }
+        server.setUpdateStatus(false);
+        server.setUpdateTime((int) (System.currentTimeMillis() / 1000));
+        imServerService.updateById(server);
+
+        Integer endTime = (int) System.currentTimeMillis() / 1000;
+
+        log.info("更新完毕 花费时间 {} 秒");
+        return isSuccess;
+    }
+
+    /**
+     * 整理数据
+     * @param type
+     * @return
+     */
+    private Boolean normalizeIMServerData(String type) {
+        if(StringUtils.isBlank(type)) {
+            return true;
+        }
+        if(type.equalsIgnoreCase(COMPANY_STR)) {
+            List<Company> companies = companyService.list();
+            for(Company company : companies) {
+                partService.lambdaUpdate().set(Part::getCustomerName, company.getName()).eq(Part::getCustomerGuid, company.getGuid()).update();
+            }
+        }
+        if(type.equalsIgnoreCase(JOB_STR)) {
+            List<Part> parts = partService.list();
+            for(Part part: parts) {
+                jobService.lambdaUpdate().set(Job::getPartName, part.getPartName()).set(Job::getPartNumber, part.getPartNumber()).set(Job::getPartRevision, part.getPartRevisionLevel()).set(Job::getCustomerGuid, part.getCustomerGuid()).eq(Job::getPartGuid, part.getGuid()).update();
+
+//                List<Job> jobs = jobService.lambdaQuery().eq(Job::getPartGuid, part.getGuid()).select(Job::getPartGuid, Job::getQuantity, Job::getTotalFailedLots, Job::getTotalFailedSamples, Job::getTotalLots, Job::getTotalSamples).list();
+                List<Job> jobs = jobService.lambdaQuery().eq(Job::getPartName, part.getPartName()).eq(Job::getPartNumber, part.getPartNumber()).eq(Job::getPartRevision, part.getPartRevisionLevel()).select(Job::getPartGuid, Job::getQuantity, Job::getTotalFailedLots, Job::getTotalFailedSamples, Job::getTotalLots, Job::getTotalSamples).list();
+                Integer quantity = 0;
+                Integer totalFailedLots = 0;
+                Integer totalFailedSamples = 0;
+                Integer totalLots = 0;
+                Integer totalSamples = 0;
+                Integer jobCount = 0;
+                for(Job job : jobs) {
+                    quantity += job.getQuantity();
+                    totalFailedLots += job.getTotalFailedLots();
+                    totalFailedSamples += job.getTotalFailedSamples();
+                    totalLots += job.getTotalLots();
+                    totalSamples += job.getTotalSamples();
+                    jobCount += 1;
+                }
+                partService.lambdaUpdate().set(Part::getLotTotal, totalLots).set(Part::getSampleTotal, totalSamples).set(Part::getJobTotal, jobCount).eq(Part::getGuid, part.getGuid()).update();
+            }
+        }
+        if(type.equalsIgnoreCase(DIM_STR)) {
+            List<Drawing> drawings = drawingService.list();
+            for (Drawing drawing : drawings) {
+                dimensionService.lambdaUpdate().set(Dimension::getPartGuid, drawing.getPartGuid()).eq(Dimension::getDrawingGuid, drawing.getGuid()).update();
+            }
+        }
+
+//        if(type.equalsIgnoreCase(SAMPLE_STR)) {
+//            List<SampleCount> list = sampleService.customCount();
+//            for (SampleCount sampleCount : list) {
+//                dimensionService.lambdaUpdate().set(Dimension::getPartGuid, drawing.getPartGuid()).eq(Dimension::getDrawingGuid, drawing.getGuid()).update();
+//            }
+//        }
+
+        if(type.equalsIgnoreCase("designator")) {
+            List<CharacterDesignator> characterDesignators = dimensionService.listCharacterDesignator();
+            for(CharacterDesignator cd : characterDesignators) {
+                CharacterDesignator current = characterDesignatorService.lambdaQuery().eq(CharacterDesignator::getName, cd.getName()).one();
+                if(current == null) {
+                    characterDesignatorService.save(cd);
+                }
+            }
+        }
+
+        if(type.equalsIgnoreCase("dimType")) {
+            List<DimensionType> dimensionTypes = dimensionService.listDimensionTypes();
+            for(DimensionType dt : dimensionTypes) {
+                DimensionType current = dimensionTypeService.lambdaQuery().eq(DimensionType::getGuid, dt.getGuid()).one();
+                if(current == null) {
+                    dimensionTypeService.save(dt);
+                }
+            }
+        }
+//        this.baseMapper.normalizePartCompany();
+//        this.baseMapper.normalizeJob();
+//        this.baseMapper.normalizePartTotal();
+//        this.baseMapper.normalizeDim();
+////        this.baseMapper.normalizeSample();
+////        this.baseMapper.normalizeLot();
+        return true;
+    }
+
+    /**
+     * 根据Procedure检测Dim属于哪个InspCenter
+     * @return
+     */
+    private Boolean normalizeDimData(String serverUri, String apiUri, String accessToken) {
+        JSONObject queryParams = new JSONObject();
+        try {
+            List<Procedure> ps = procedureService.lambdaQuery().select(Procedure::getId, Procedure::getGuid, Procedure::getPartGuid).list();
+            for(Procedure procedure : ps) {
+                List<Dimension> dimensions = dimensionService.lambdaQuery().eq(Dimension::getPartGuid, procedure.getPartGuid()).isNotNull(Dimension::getInspCenterGuid).select(Dimension::getId, Dimension::getGuid).list();
+                List<Dimension> needUpdate = new ArrayList<>();
+                for(Dimension dim : dimensions) {
+                    queryParams.put("DimGUID", dim.getGuid());
+                    String apiResult = imService.post(serverUri + apiUri, accessToken, queryParams);
+                    JSONObject res = JSONObject.parseObject(apiResult);
+                    if(res.getJSONArray("Procedures").size() > 0) {
+                        dim.setInspCenterGuid(res.getJSONArray("Procedures").getJSONObject(0).getString("InspCenterGUID"));
+                        dim.setProcedureGuid(procedure.getGuid());
+                        needUpdate.add(dim);
+                    }
+                }
+                dimensionService.updateBatchById(needUpdate);
+            }
+            return true;
+        } catch (IMErrorException e) {
+            log.error(e.getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * 同步数据
+     * @param serverUri
+     * @param accessToken
+     * @return
+     */
+    private Boolean synchronizeIM(Long serverId, String accessToken, String serverUri, String apiUri, JSONObject params) {
+        JSONObject queryParams = new JSONObject();
+        queryParams.put(PAGE_KEY, EMPTY_STR);
+        if(Objects.nonNull(params)) {
+            for (Map.Entry entry : params.entrySet()) {
+                queryParams.put(entry.getKey().toString(), entry.getValue());
+            }
+        }
+
+        try {
+            String apiResult = imService.post(serverUri + apiUri, accessToken, queryParams);
+            JSONObject res = JSONObject.parseObject(apiResult);
+            updateData(res, serverId, apiUri, serverUri, accessToken, params);
+            String nextPageId = res.getString(NEXT_PAGE_KEY);
+            while(StringUtils.isNotBlank(nextPageId)) {
+                queryParams.put(PAGE_KEY, nextPageId);
+                apiResult = imService.post(serverUri + apiUri, accessToken, queryParams);
+                res = JSONObject.parseObject(apiResult);
+                updateData(res, serverId, apiUri, serverUri, accessToken, params);
+                nextPageId = res.getString(NEXT_PAGE_KEY);
+            }
+            return true;
+        } catch (IMErrorException e) {
+            log.error(e.getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * 更新数据库
+     * @param data
+     * @param serverId
+     * @param apiUri
+     * @param serverUri
+     * @param accessToken
+     * @param params
+     * @return
+     */
+    private Boolean updateData(JSONObject data, Long serverId, String apiUri, String serverUri, String accessToken, JSONObject params) {
+        JSONArray list;
+        switch (apiUri) {
+            case PART_URI:
+                list = data.getJSONArray("Parts");
+                if(Objects.isNull(list)) {
+                    break;
+                }
+                List<Part> partList = new ArrayList<>();
+                list.stream().filter(Objects::nonNull).forEach(dist -> {
+                    JSONObject j = (JSONObject) dist;
+                    LocalDateTime date = normalizeDate(j.getString("LastModificationDate"));
+                    j.remove("LastModificationDate");
+                    Part dto = JSONObject.toJavaObject(j, Part.class);
+                    dto.setFlag(DigestUtils.md5DigestAsHex(j.toJSONString().getBytes()));
+                    dto.setLastModificationDate(date);
+
+                    dto.setUpdateTime((int) (System.currentTimeMillis() / 1000));
+                    dto.setServerId(serverId);
+                    partList.add(dto);
+                });
+                partService.createPartMulti(partList);
+                break;
+            case JOB_URI:
+                list = data.getJSONArray("Jobs");
+                if(Objects.isNull(list)) {
+                    break;
+                }
+                List<Job> jobList = new ArrayList<>();
+                list.stream().filter(Objects::nonNull).forEach(dist -> {
+                    JSONObject j = (JSONObject) dist;
+                    LocalDateTime date = normalizeDate(j.getString("ActivationDate"));
+                    j.remove("ActivationDate");
+                    LocalDateTime date1 = normalizeDate(j.getString("DeliveryDate"));
+                    j.remove("DeliveryDate");
+                    Job dto = JSONObject.toJavaObject(j, Job.class);
+                    dto.setFlag(DigestUtils.md5DigestAsHex(j.toJSONString().getBytes()));
+                    dto.setActivationDate(date);
+                    dto.setDeliveryDate(date1);
+
+                    dto.setUpdateTime((int) (System.currentTimeMillis() / 1000));
+                    dto.setServerId(serverId);
+                    jobList.add(dto);
+                });
+                jobService.createJobMulti(jobList);
+                break;
+            case LOT_URI:
+                list = data.getJSONArray("Lots");
+                if(Objects.isNull(list)) {
+                    break;
+                }
+                List<Lot> lotList = new ArrayList<>();
+                list.stream().filter(Objects::nonNull).forEach(dist -> {
+                    JSONObject j = (JSONObject) dist;
+                    LocalDateTime date = normalizeDate(j.getString("DueDate"));
+                    j.remove("DueDate");
+                    LocalDateTime date1 = normalizeDate(j.getString("StartDate"));
+                    j.remove("StartDate");
+                    Lot dto = JSONObject.toJavaObject(j, Lot.class);
+                    dto.setFlag(DigestUtils.md5DigestAsHex(j.toJSONString().getBytes()));
+                    dto.setDueDate(date);
+                    dto.setStartDate(date1);
+
+                    dto.setUpdateTime((int) (System.currentTimeMillis() / 1000));
+                    dto.setServerId(serverId);
+                    lotList.add(dto);
+                });
+                lotService.createLotMulti(lotList);
+                break;
+            case SAMPLE_URI:
+                list = data.getJSONArray("Samples");
+                if(Objects.isNull(list)) {
+                    break;
+                }
+                List<Sample> sampleList = new ArrayList<>();
+                list.stream().filter(Objects::nonNull).forEach(dist -> {
+                    JSONObject j = (JSONObject) dist;
+                    LocalDateTime date = normalizeDate(j.getString("CreationDate"));
+                    j.remove("CreationDate");
+                    Sample dto = JSONObject.toJavaObject(j, Sample.class);
+                    dto.setFlag(DigestUtils.md5DigestAsHex(j.toJSONString().getBytes()));
+                    dto.setCreationDate(date);
+
+                    dto.setUpdateTime((int) (System.currentTimeMillis() / 1000));
+                    dto.setServerId(serverId);
+                    sampleList.add(dto);
+                });
+                sampleService.createSampleMulti(sampleList);
+                break;
+            case DIM_URI:
+                list = data.getJSONArray("Dims");
+                if(Objects.isNull(list)) {
+                    break;
+                }
+                List<Dimension> dimList = new ArrayList<>();
+                list.stream().filter(Objects::nonNull).forEach(dist -> {
+                    JSONObject j = (JSONObject) dist;
+                    Dimension dto = JSONObject.toJavaObject(j, Dimension.class);
+                    dto.setFlag(DigestUtils.md5DigestAsHex(j.toJSONString().getBytes()));
+
+                    dto.setUpdateTime((int) (System.currentTimeMillis() / 1000));
+                    dto.setServerId(serverId);
+                    dimList.add(dto);
+                });
+                dimensionService.createDimensionMulti(dimList);
+                break;
+            case RESULT_URI:
+                list = data.getJSONArray("Results");
+                if(Objects.isNull(list)) {
+                    break;
+                }
+                List<Result> resultList = new ArrayList<>();
+                list.stream().filter(Objects::nonNull).forEach(dist -> {
+                    JSONObject j = (JSONObject) dist;
+                    LocalDateTime date = normalizeDate(j.getString("InspectedDate"));
+                    j.remove("InspectedDate");
+                    Result dto = JSONObject.toJavaObject(j, Result.class);
+                    dto.setFlag(DigestUtils.md5DigestAsHex(j.toJSONString().getBytes()));
+                    dto.setInspectedDate(date);
+
+                    dto.setUpdateTime((int) (System.currentTimeMillis() / 1000));
+                    dto.setServerId(serverId);
+                    resultList.add(dto);
+                });
+                resultService.createResultMulti(resultList);
+                break;
+            case COMPANY_URI:
+                list = data.getJSONArray("Companies");
+                if(Objects.isNull(list)) {
+                    break;
+                }
+                List<Company> companyList = new ArrayList<>();
+                list.stream().filter(Objects::nonNull).forEach(dist -> {
+                    JSONObject j = (JSONObject) dist;
+                    Company dto = JSONObject.toJavaObject(j, Company.class);
+                    dto.setFlag(DigestUtils.md5DigestAsHex(j.toJSONString().getBytes()));
+                    dto.setUpdateTime((int) (System.currentTimeMillis() / 1000));
+                    dto.setServerId(serverId);
+                    companyList.add(dto);
+                });
+                companyService.createCompanyMulti(companyList);
+                break;
+            case RECEIVER_URI:
+                list = data.getJSONArray("Receivers");
+                if(Objects.isNull(list)) {
+                    break;
+                }
+                List<Receiver> receiverList = new ArrayList<>();
+                list.stream().filter(Objects::nonNull).forEach(dist -> {
+                    JSONObject j = (JSONObject) dist;
+                    Receiver dto = JSONObject.toJavaObject(j, Receiver.class);
+                    dto.setFlag(DigestUtils.md5DigestAsHex(j.toJSONString().getBytes()));
+                    dto.setUpdateTime((int) (System.currentTimeMillis() / 1000));
+                    dto.setServerId(serverId);
+                    receiverList.add(dto);
+                });
+                receiverService.createReceiverMulti(receiverList);
+                break;
+            case INSP_CENTER_URI:
+                list = data.getJSONArray("InspCenters");
+                if(Objects.isNull(list)) {
+                    break;
+                }
+                List<InspCenter> inspCenterList = new ArrayList<>();
+                list.stream().filter(Objects::nonNull).forEach(dist -> {
+                    JSONObject j = (JSONObject) dist;
+                    InspCenter dto = JSONObject.toJavaObject(j, InspCenter.class);
+                    dto.setFlag(DigestUtils.md5DigestAsHex(j.toJSONString().getBytes()));
+                    dto.setUpdateTime((int) (System.currentTimeMillis() / 1000));
+                    dto.setServerId(serverId);
+                    inspCenterList.add(dto);
+                });
+                inspCenterService.createInspCenterMulti(inspCenterList);
+                break;
+            case NCR_URI:
+                list = data.getJSONArray("NCRs");
+                if(Objects.isNull(list)) {
+                    break;
+                }
+                List<Ncr> ncrList = new ArrayList<>();
+                list.stream().filter(Objects::nonNull).forEach(dist -> {
+                    JSONObject j = (JSONObject) dist;
+                    LocalDateTime creationDate = normalizeDate(j.getString("CreationDate"));
+                    j.remove("CreationDate");
+                    LocalDateTime responseDate = normalizeDate(j.getString("ResponseDate"));
+                    j.remove("ResponseDate");
+                    Ncr dto = JSONObject.toJavaObject(j, Ncr.class);
+                    dto.setCreationDate(creationDate);
+                    dto.setResponseDate(responseDate);
+                    dto.setFlag(DigestUtils.md5DigestAsHex(j.toJSONString().getBytes()));
+                    dto.setUpdateTime((int) (System.currentTimeMillis() / 1000));
+                    dto.setServerId(serverId);
+                    ncrList.add(dto);
+                });
+                ncrService.createNcrMulti(ncrList);
+                break;
+            case CONTACT_URI:
+                list = data.getJSONArray("Contacts");
+                if(Objects.isNull(list)) {
+                    break;
+                }
+                List<Contact> contactList = new ArrayList<>();
+                list.stream().filter(Objects::nonNull).forEach(dist -> {
+                    JSONObject j = (JSONObject) dist;
+                    Contact dto = JSONObject.toJavaObject(j, Contact.class);
+                    dto.setFlag(DigestUtils.md5DigestAsHex(j.toJSONString().getBytes()));
+                    dto.setUpdateTime((int) (System.currentTimeMillis() / 1000));
+                    dto.setServerId(serverId);
+                    contactList.add(dto);
+                });
+                contactService.createContactMulti(contactList);
+                break;
+            case PROCEDURE_URI:
+                list = data.getJSONArray("Procedures");
+                if(Objects.isNull(list)) {
+                    break;
+                }
+                List<Procedure> procedureList = new ArrayList<>();
+                list.stream().filter(Objects::nonNull).forEach(dist -> {
+                    JSONObject j = (JSONObject) dist;
+                    Procedure dto = JSONObject.toJavaObject(j, Procedure.class);
+                    dto.setFlag(DigestUtils.md5DigestAsHex(j.toJSONString().getBytes()));
+                    dto.setUpdateTime((int) (System.currentTimeMillis() / 1000));
+                    dto.setServerId(serverId);
+                    procedureList.add(dto);
+                });
+                procedureService.createProcedureMulti(procedureList);
+                break;
+            case OPERATION_URI:
+                list = data.getJSONArray("Operations");
+                if(Objects.isNull(list)) {
+                    break;
+                }
+                List<Operation> operationList = new ArrayList<>();
+                list.stream().filter(Objects::nonNull).forEach(dist -> {
+                    JSONObject j = (JSONObject) dist;
+                    Operation dto = JSONObject.toJavaObject(j, Operation.class);
+                    dto.setFlag(DigestUtils.md5DigestAsHex(j.toJSONString().getBytes()));
+                    dto.setUpdateTime((int) (System.currentTimeMillis() / 1000));
+                    dto.setServerId(serverId);
+                    operationList.add(dto);
+                });
+                operationService.createOperationMulti(operationList);
+                break;
+            case GAGE_URI:
+                list = data.getJSONArray("Gages");
+                if(Objects.isNull(list)) {
+                    break;
+                }
+                List<Gage> gageList = new ArrayList<>();
+                list.stream().filter(Objects::nonNull).forEach(dist -> {
+                    JSONObject j = (JSONObject) dist;
+//                    LocalDateTime date = normalizeDate(j.getString("PurchaseDate"));
+//                    j.remove("PurchaseDate");
+                    Gage dto = JSONObject.toJavaObject(j, Gage.class);
+                    dto.setFlag(DigestUtils.md5DigestAsHex(j.toJSONString().getBytes()));
+                    dto.setUpdateTime((int) (System.currentTimeMillis() / 1000));
+                    dto.setServerId(serverId);
+                    dto.setUpdateTime((int) (System.currentTimeMillis() / 1000));
+                    gageList.add(dto);
+                });
+                gageService.createGageMulti(gageList);
+                break;
+            case DRAWING_URI:
+                list = data.getJSONArray("Drawings");
+                if(Objects.isNull(list)) {
+                    break;
+                }
+//                List<Drawing> drawingList = new ArrayList<>();
+                list.stream().filter(Objects::nonNull).forEach(dist -> {
+                    JSONObject j = (JSONObject) dist;
+                    Drawing dto = JSONObject.toJavaObject(j, Drawing.class);
+                    dto.setServerId(serverId);
+                    dto.setFlag(DigestUtils.md5DigestAsHex(j.toJSONString().getBytes()));
+                    dto.setUpdateTime((int) (System.currentTimeMillis() / 1000));
+//                    drawingList.add(dto);
+                    drawingService.completeDrawingData(dto, serverUri, accessToken);
+                });
+                break;
+            default:
+                break;
+        }
+        return true;
+    }
+
+    /**
+     * 格式化时间
+     * @param dateStr
+     * @return
+     */
+    private LocalDateTime normalizeDate(String dateStr) {
+        if(StringUtils.isNotBlank(dateStr) && dateStr.indexOf("T") > 0) {
+            try{
+                return LocalDateTime.parse(dateStr.substring(0, dateStr.indexOf("+")-4), DateTimeFormatter.ofPattern(DATE_FORMAT));
+            } catch(RuntimeException e) {
+                log.error(e.getMessage());
+                return null;
+            }
+        } else {
+            return null;
+        }
+    }
+
+    /**
+     * 保存记录
+     * @param type
+     * @param serverUri
+     * @return
+     */
+    private void buildApiRecord(String type, String serverUri) {
+        ImApiRecord imApiRecord = new ImApiRecord();
+        imApiRecord.setServerId(-1L);
+        imApiRecord.setServerUrl(serverUri);
+        imApiRecord.setContent(type);
+        imApiRecord.setUpdateTime((int) (System.currentTimeMillis() / 1000));
+        save(imApiRecord);
+    }
+}

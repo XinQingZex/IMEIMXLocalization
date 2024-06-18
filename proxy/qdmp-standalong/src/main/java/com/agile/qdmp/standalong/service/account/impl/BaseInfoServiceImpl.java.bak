@@ -1,0 +1,18 @@
+package com.agile.qdmp.standalong.service.account.impl;
+
+import com.agile.qdmp.standalong.mapper.account.BaseInfoMapper;
+import com.agile.qdmp.standalong.model.entity.account.BaseInfo;
+import com.agile.qdmp.standalong.service.account.IBaseInfoService;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import org.springframework.stereotype.Service;
+
+/**
+ * 个人信息表 服务类
+ *
+ * @author wenbinglei
+ * @date 2021-03-23 18:00:27
+ */
+@Service
+public class BaseInfoServiceImpl extends ServiceImpl<BaseInfoMapper, BaseInfo> implements IBaseInfoService {
+
+}

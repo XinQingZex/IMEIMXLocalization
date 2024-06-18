@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.agile.qdmp.standalong.mapper.integrator.OperationMapper">
+    <select id="listByQuery" resultType="com.alibaba.fastjson.JSONObject">
+        SELECT
+            p.*
+        FROM
+            Objects_ManProcesses p
+        WHERE
+            p.IsDeleted = 0
+            AND
+            p.ManProcessPartID = #{query.partId};
+    </select>
+</mapper>

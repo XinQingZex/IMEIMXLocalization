@@ -1,0 +1,18 @@
+package com.agile.qdmp.standalong.model.convert.account;
+
+import com.agile.qdmp.standalong.model.dto.account.SocialInfoDTO;
+import com.agile.qdmp.standalong.model.entity.account.SocialInfo;
+import com.agile.tem.common.core.model.Convert;
+import org.mapstruct.Mapper;
+import org.mapstruct.factory.Mappers;
+
+/**
+ * 社会化用户表 数据转换
+ *
+ * @author wenbinglei
+ * @date 2021-03-23 18:00:08
+ */
+@Mapper
+public interface SocialInfoConverter extends Convert<SocialInfo, SocialInfoDTO> {
+    SocialInfoConverter INSTANCE = Mappers.getMapper(SocialInfoConverter.class);
+}

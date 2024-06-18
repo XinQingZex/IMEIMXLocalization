@@ -1,0 +1,18 @@
+package com.agile.qdmp.standalong.model.convert.account;
+
+import com.agile.qdmp.standalong.model.dto.account.AddressDTO;
+import com.agile.qdmp.standalong.model.entity.account.Address;
+import com.agile.tem.common.core.model.Convert;
+import org.mapstruct.Mapper;
+import org.mapstruct.factory.Mappers;
+
+/**
+ * 用户收货地址表 数据转换
+ *
+ * @author wenbinglei
+ * @date 2021-03-23 18:00:37
+ */
+@Mapper
+public interface AddressConverter extends Convert<Address, AddressDTO> {
+    AddressConverter INSTANCE = Mappers.getMapper(AddressConverter.class);
+}

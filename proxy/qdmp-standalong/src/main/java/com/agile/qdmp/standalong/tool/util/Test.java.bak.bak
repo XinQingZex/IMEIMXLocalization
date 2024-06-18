@@ -1,0 +1,861 @@
+package com.agile.qdmp.standalong.tool.util;
+
+
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
+import org.apache.pdfbox.Loader;
+import org.apache.pdfbox.cos.COSName;
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.pdmodel.PDPage;
+import org.apache.pdfbox.pdmodel.PDPageContentStream;
+import org.apache.pdfbox.pdmodel.font.PDFont;
+import org.apache.pdfbox.pdmodel.font.PDType1Font;
+import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
+import org.apache.pdfbox.pdmodel.graphics.state.PDExtendedGraphicsState;
+import org.apache.pdfbox.pdmodel.interactive.annotation.PDAnnotation;
+import org.apache.pdfbox.pdmodel.common.PDRectangle;
+import org.apache.pdfbox.pdmodel.interactive.annotation.PDAnnotationSquare;
+import org.apache.pdfbox.pdmodel.interactive.annotation.PDAnnotationSquareCircle;
+import org.apache.pdfbox.util.Matrix;
+
+import java.awt.*;
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
+
+public class Test {
+    static final String DEFAULT_FILENAME = "D:\\111\\test\\pdf\\1669347451300.pdf"; // 源PDF
+//    static final String DEFAULT_FILENAME = "D:\\111\\test\\pdf\\1670038865171.pdf"; // 源PDF 90
+    static final String DEFAULT_FILENAME_TEMP = "D:\\111\\test\\pdf\\copy.pdf"; // 生成新的PDF
+    static final PDFont font = PDType1Font.HELVETICA;
+
+    /**
+     * PDF添加图片水印
+     * */
+    public static void main(String[] args) throws IOException {
+        File file = new File(DEFAULT_FILENAME);
+        PDDocument doc = Loader.loadPDF(file);
+
+        PDPage page = doc.getPage(0);
+        System.out.println("page.getRotation():" + page.getRotation());
+        float width = page.getMediaBox().getWidth();
+        Float height = page.getMediaBox().getHeight();
+        int rotation = page.getRotation();
+
+        float ratio = 0.75f;
+
+        try (PDPageContentStream contentStream = new PDPageContentStream(doc, page, PDPageContentStream.AppendMode.APPEND, false))
+        {
+            switch (rotation)
+            {
+                case 90:
+                    contentStream.transform(Matrix.getRotateInstance(Math.toRadians(90), 0, 0));
+                    for(int i = 0; i < points.size(); i++) {
+                        JSONObject p = points.getJSONObject(i);
+                        String[] shapeCenter = p.getString("shapeCenter").split(",");
+                        List<Integer> cs = new ArrayList<>();
+                        cs.add((int) (Integer.parseInt(shapeCenter[0]) * ratio));
+                        cs.add((int) (Integer.parseInt(shapeCenter[1]) * ratio));
+                        drawCircle(contentStream, cs.get(0), cs.get(1) * -1 - 10, 10, p.getString("shapeTitle"));
+                    }
+                    break;
+//                case 180:
+//                    contentStream.transform(Matrix.getRotateInstance(Math.toRadians(180), width, height));
+//                    break;
+//                case 270:
+//                    width = page.getMediaBox().getHeight();
+//                    height = page.getMediaBox().getWidth();
+//                    contentStream.transform(Matrix.getRotateInstance(Math.toRadians(270), 0, width));
+//                    break;
+                default:
+                    for(int i = 0; i < points.size(); i++) {
+                        JSONObject p = points.getJSONObject(i);
+                        String[] shapeCenter = p.getString("shapeCenter").split(",");
+                        List<Integer> cs = new ArrayList<>();
+                        cs.add((int) (Integer.parseInt(shapeCenter[0].trim()) * ratio));
+                        cs.add((int) (Integer.parseInt(shapeCenter[1].trim()) * ratio));
+                        System.out.println(cs);
+                        drawCircle(contentStream, cs.get(0), height.intValue() - cs.get(1) - 10, 10, p.getString("shapeTitle"));
+                    }
+                    break;
+            }
+
+//            drawCircle(contentStream, 100, 200, 10, "###");
+//            drawCircle(contentStream, 200, -100, 10, "###");
+
+
+
+//            for(int i = 0; i < points.size(); i++) {
+//                JSONObject p = points.getJSONObject(i);
+//                String[] center = p.getString("shapeCenter").split(",");
+//                switch (rotation)
+//                {
+//                    case 90:
+//                        width = page.getMediaBox().getHeight();
+//                        height = page.getMediaBox().getWidth();
+//                        contentStream.transform(Matrix.getRotateInstance(Math.toRadians(90), height, 0));
+//                        break;
+//                    case 180:
+//                        contentStream.transform(Matrix.getRotateInstance(Math.toRadians(180), width, height));
+//                        break;
+//                    case 270:
+//                        width = page.getMediaBox().getHeight();
+//                        height = page.getMediaBox().getWidth();
+//                        contentStream.transform(Matrix.getRotateInstance(Math.toRadians(270), 0, width));
+//                        break;
+//                    default:
+//                        break;
+//                }
+//                drawText(contentStream, 200, 200, p.getString("shapeTitle"));
+//
+//            }
+
+//            contentStream.beginText();
+//            contentStream.setFont(font, 12);
+//            contentStream.newLineAtOffset(80, 500);
+//            contentStream.showText("Alternative 1: The earth is a flat circle");
+//            contentStream.endText();
+        }
+
+
+        /*try (PDPageContentStream contentStream = new PDPageContentStream(doc, page, PDPageContentStream.AppendMode.APPEND, false))
+        {
+            switch (rotation)
+            {
+                case 90:
+                    width = page.getMediaBox().getHeight();
+                    height = page.getMediaBox().getWidth();
+                    contentStream.transform(Matrix.getRotateInstance(Math.toRadians(90), height, 0));
+                    break;
+                case 180:
+                    contentStream.transform(Matrix.getRotateInstance(Math.toRadians(180), width, height));
+                    break;
+                case 270:
+                    width = page.getMediaBox().getHeight();
+                    height = page.getMediaBox().getWidth();
+                    contentStream.transform(Matrix.getRotateInstance(Math.toRadians(270), 0, width));
+                    break;
+                default:
+                    break;
+            }
+            for(int i = 0; i < points.size(); i++) {
+                JSONObject p = points.getJSONObject(i);
+                String[] center = p.getString("shapeCenter").split(",");
+                drawText(contentStream, Integer.parseInt(center[0]), Integer.parseInt(center[1]), p.getString("shapeTitle"));
+
+            }
+
+//            contentStream.beginText();
+//            contentStream.setFont(font, 12);
+//            contentStream.newLineAtOffset(80, 500);
+//            contentStream.showText("Alternative 1: The earth is a flat circle");
+//            contentStream.endText();
+        }*/
+
+
+        /*PDPageContentStream contentStream = new PDPageContentStream(doc, page, PDPageContentStream.AppendMode.APPEND, true,true);
+        *//*contentStream.setNonStrokingColor(Color.red);
+        contentStream.addRect(250, 250, 150, 150);
+        contentStream.fill();
+        contentStream.close();*//*
+
+        PDFont font = PDType1Font.HELVETICA;
+        contentStream.setNonStrokingColor(Color.RED);
+        contentStream.beginText();
+        contentStream.setFont(font, 12);
+        contentStream.newLineAtOffset(80, 500);
+        contentStream.showText("Alternative 1: The earth is a flat circle");
+        contentStream.endText();*/
+
+
+        doc.save(DEFAULT_FILENAME_TEMP);
+
+
+//        // TODO 这里的数据 计算水印个数(900 150 700 150) 首个水印位置(-200至-100)都是实验得到 没有理论依据
+//        for (int top = 0; top < 700; top += 150) {
+//            int beginLeft = new Random().ints(-200, -50).limit(1).findFirst().getAsInt();
+//            for (int left = beginLeft; left < 700; left += 150) {
+//                for(int i=0; i<doc.getNumberOfPages(); i++){
+//                    PDPage page = doc.getPage(i);
+//                    PDPageContentStream contentStream = new PDPageContentStream(doc, page, PDPageContentStream.AppendMode.APPEND, true,true);
+//                    PDImageXObject pdImage = PDImageXObject.createFromFile(DEFAULT_IMAGE, doc);
+//
+//                    PDExtendedGraphicsState pdExtGfxState = new PDExtendedGraphicsState();
+//
+//                    // 设置透明度
+//                    pdExtGfxState.setNonStrokingAlphaConstant(0.5f);
+//                    pdExtGfxState.setAlphaSourceFlag(true);
+//                    pdExtGfxState.getCOSObject().setItem(COSName.BM, COSName.MULTIPLY);
+//                    contentStream.setGraphicsStateParameters(pdExtGfxState);
+//
+//                    float width = 100;
+//                    float height = 100;
+//                    contentStream.drawImage(pdImage, left, top, width, height);
+//                    contentStream.close();
+//                    doc.save(DEFAULT_FILENAME_TEMP);
+//                }
+//            }
+//        }
+        doc.close();
+    }
+
+
+    private static void drawCircle(PDPageContentStream contentStream, int cx, int cy, int r, String number) throws IOException {
+        final float k = 0.552284749831f;
+        contentStream.setNonStrokingColor(Color.BLUE);
+        contentStream.moveTo(cx - r, cy);
+        contentStream.curveTo(cx - r, cy + k * r, cx - k * r, cy + r, cx, cy + r);
+        contentStream.curveTo(cx + k * r, cy + r, cx + r, cy + k * r, cx + r, cy);
+        contentStream.curveTo(cx + r, cy - k * r, cx + k * r, cy - r, cx, cy - r);
+        contentStream.curveTo(cx - k * r, cy - r, cx - r, cy - k * r, cx - r, cy);
+        contentStream.fill();
+
+        contentStream.setNonStrokingColor(Color.WHITE);
+        contentStream.beginText();
+        contentStream.setFont(font, 12);
+        contentStream.newLineAtOffset(cx - 5 , cy - 5);
+        contentStream.showText(number);
+        contentStream.endText();
+    }
+
+    private static void drawText(PDPageContentStream contentStream, int cx, int cy, String number) throws IOException {
+        contentStream.setNonStrokingColor(Color.BLUE);
+        contentStream.beginText();
+        contentStream.setFont(font, 12);
+        contentStream.newLineAtOffset(cx - 5, cy - 5);
+        contentStream.showText(number);
+        contentStream.endText();
+    }
+
+    static final JSONArray points = JSONArray.parseArray("[\n" +
+            "    {\n" +
+            "        \"id\": \"1598932195945213958\",\n" +
+            "        \"companyId\": \"0\",\n" +
+            "        \"companyName\": \"\",\n" +
+            "        \"serverId\": \"-1\",\n" +
+            "        \"serverName\": \"\",\n" +
+            "        \"partGuid\": \"1b6c9a2e-b122-4a57-a2a4-5532d6dbb229\",\n" +
+            "        \"datMod1\": \"\",\n" +
+            "        \"datMod2\": \"\",\n" +
+            "        \"datMod3\": \"\",\n" +
+            "        \"datum1\": \"A\",\n" +
+            "        \"datum2\": \"B\",\n" +
+            "        \"datum3\": \"\",\n" +
+            "        \"designator\": \"\",\n" +
+            "        \"dimNo\": \"10 OP10\",\n" +
+            "        \"dimSort\": \"00100001\",\n" +
+            "        \"drawingGuid\": \"ac3cdf40-f23d-442c-9bc7-7dbc1583803b\",\n" +
+            "        \"guid\": \"88a63f2c-9f51-4b65-901e-a4204fe6a5c4\",\n" +
+            "        \"lowerTol\": 0,\n" +
+            "        \"multiplier\": 1,\n" +
+            "        \"nominal\": 0,\n" +
+            "        \"note\": \"\",\n" +
+            "        \"operationGuid\": \"ad9fbe15-6cac-42a1-a055-27a2f095c0b4\",\n" +
+            "        \"requirement\": \"{¼~|.0~0~3~|A~|B~}\",\n" +
+            "        \"shapeActive\": 1,\n" +
+            "        \"shapeCenter\": \"651, 218\",\n" +
+            "        \"shapeLocation\": \"B6\",\n" +
+            "        \"shapeOffset\": \"0,0\",\n" +
+            "        \"shapePoints\": \"135,26\",\n" +
+            "        \"shapeRotateAngle\": 0,\n" +
+            "        \"shapeTitle\": \"10\",\n" +
+            "        \"shapeType\": 3,\n" +
+            "        \"tolCalc\": 0,\n" +
+            "        \"tolClass\": \"\",\n" +
+            "        \"tolMod1\": \"\",\n" +
+            "        \"tolMod2\": \"\",\n" +
+            "        \"tolMod3\": \"\",\n" +
+            "        \"tolType\": 2,\n" +
+            "        \"tolTypeText\": \"As Limit\",\n" +
+            "        \"type\": 21,\n" +
+            "        \"typeText\": \"Perpendicularity\",\n" +
+            "        \"units\": 2,\n" +
+            "        \"upperTol\": 0,\n" +
+            "        \"procedureGuid\": \"\",\n" +
+            "        \"inspCenterGuid\": \"\",\n" +
+            "        \"flag\": \"f23442d862a65af4671da5942cc49a96\",\n" +
+            "        \"updateTime\": 1670050116\n" +
+            "    },\n" +
+            "    {\n" +
+            "        \"id\": \"1598932195878105090\",\n" +
+            "        \"companyId\": \"0\",\n" +
+            "        \"companyName\": \"\",\n" +
+            "        \"serverId\": \"-1\",\n" +
+            "        \"serverName\": \"\",\n" +
+            "        \"partGuid\": \"1b6c9a2e-b122-4a57-a2a4-5532d6dbb229\",\n" +
+            "        \"datMod1\": \"\",\n" +
+            "        \"datMod2\": \"\",\n" +
+            "        \"datMod3\": \"\",\n" +
+            "        \"datum1\": \"\",\n" +
+            "        \"datum2\": \"\",\n" +
+            "        \"datum3\": \"\",\n" +
+            "        \"designator\": \"\",\n" +
+            "        \"dimNo\": \"4 OP10\",\n" +
+            "        \"dimSort\": \"00040001\",\n" +
+            "        \"drawingGuid\": \"ac3cdf40-f23d-442c-9bc7-7dbc1583803b\",\n" +
+            "        \"guid\": \"c70ea07d-b6f7-4be4-96af-b78d32705afd\",\n" +
+            "        \"lowerTol\": -99,\n" +
+            "        \"multiplier\": 1,\n" +
+            "        \"nominal\": 0,\n" +
+            "        \"note\": \"\",\n" +
+            "        \"operationGuid\": \"ad9fbe15-6cac-42a1-a055-27a2f095c0b4\",\n" +
+            "        \"requirement\": \"{ .2~5~ }\",\n" +
+            "        \"shapeActive\": 1,\n" +
+            "        \"shapeCenter\": \"716,61\",\n" +
+            "        \"shapeLocation\": \"A6\",\n" +
+            "        \"shapeOffset\": \"0,0\",\n" +
+            "        \"shapePoints\": \"37,24\",\n" +
+            "        \"shapeRotateAngle\": 0,\n" +
+            "        \"shapeTitle\": \"4\",\n" +
+            "        \"shapeType\": 3,\n" +
+            "        \"tolCalc\": 0,\n" +
+            "        \"tolClass\": \"\",\n" +
+            "        \"tolMod1\": \"\",\n" +
+            "        \"tolMod2\": \"\",\n" +
+            "        \"tolMod3\": \"\",\n" +
+            "        \"tolType\": 3,\n" +
+            "        \"tolTypeText\": \"Basic\",\n" +
+            "        \"type\": 15,\n" +
+            "        \"typeText\": \"Linear\",\n" +
+            "        \"units\": 2,\n" +
+            "        \"upperTol\": 99,\n" +
+            "        \"procedureGuid\": \"\",\n" +
+            "        \"inspCenterGuid\": \"\",\n" +
+            "        \"flag\": \"7dcd56a2ef9ab464d945221c4f06a6a0\",\n" +
+            "        \"updateTime\": 1670050116\n" +
+            "    },\n" +
+            "    {\n" +
+            "        \"id\": \"1598932195622252546\",\n" +
+            "        \"companyId\": \"0\",\n" +
+            "        \"companyName\": \"\",\n" +
+            "        \"serverId\": \"-1\",\n" +
+            "        \"serverName\": \"\",\n" +
+            "        \"partGuid\": \"1b6c9a2e-b122-4a57-a2a4-5532d6dbb229\",\n" +
+            "        \"datMod1\": \"\",\n" +
+            "        \"datMod2\": \"\",\n" +
+            "        \"datMod3\": \"\",\n" +
+            "        \"datum1\": \"\",\n" +
+            "        \"datum2\": \"\",\n" +
+            "        \"datum3\": \"\",\n" +
+            "        \"designator\": \"\",\n" +
+            "        \"dimNo\": \"6 OP10\",\n" +
+            "        \"dimSort\": \"00060001\",\n" +
+            "        \"drawingGuid\": \"ac3cdf40-f23d-442c-9bc7-7dbc1583803b\",\n" +
+            "        \"guid\": \"f665eefd-96f1-4af4-910e-6638c9feb53e\",\n" +
+            "        \"lowerTol\": -99,\n" +
+            "        \"multiplier\": 1,\n" +
+            "        \"nominal\": 0,\n" +
+            "        \"note\": \"\",\n" +
+            "        \"operationGuid\": \"ad9fbe15-6cac-42a1-a055-27a2f095c0b4\",\n" +
+            "        \"requirement\": \"{ .2~5~ }\",\n" +
+            "        \"shapeActive\": 1,\n" +
+            "        \"shapeCenter\": \"177,161\",\n" +
+            "        \"shapeLocation\": \"B2\",\n" +
+            "        \"shapeOffset\": \"0,0\",\n" +
+            "        \"shapePoints\": \"37,23\",\n" +
+            "        \"shapeRotateAngle\": 0,\n" +
+            "        \"shapeTitle\": \"6\",\n" +
+            "        \"shapeType\": 3,\n" +
+            "        \"tolCalc\": 0,\n" +
+            "        \"tolClass\": \"\",\n" +
+            "        \"tolMod1\": \"\",\n" +
+            "        \"tolMod2\": \"\",\n" +
+            "        \"tolMod3\": \"\",\n" +
+            "        \"tolType\": 3,\n" +
+            "        \"tolTypeText\": \"Basic\",\n" +
+            "        \"type\": 15,\n" +
+            "        \"typeText\": \"Linear\",\n" +
+            "        \"units\": 2,\n" +
+            "        \"upperTol\": 99,\n" +
+            "        \"procedureGuid\": \"\",\n" +
+            "        \"inspCenterGuid\": \"\",\n" +
+            "        \"flag\": \"3955e04d81df02d0886dcf683577365e\",\n" +
+            "        \"updateTime\": 1670050116\n" +
+            "    },\n" +
+            "    {\n" +
+            "        \"id\": \"1598932195815190534\",\n" +
+            "        \"companyId\": \"0\",\n" +
+            "        \"companyName\": \"\",\n" +
+            "        \"serverId\": \"-1\",\n" +
+            "        \"serverName\": \"\",\n" +
+            "        \"partGuid\": \"1b6c9a2e-b122-4a57-a2a4-5532d6dbb229\",\n" +
+            "        \"datMod1\": \"\",\n" +
+            "        \"datMod2\": \"\",\n" +
+            "        \"datMod3\": \"\",\n" +
+            "        \"datum1\": \"\",\n" +
+            "        \"datum2\": \"\",\n" +
+            "        \"datum3\": \"\",\n" +
+            "        \"designator\": \"\",\n" +
+            "        \"dimNo\": \"9 OP10\",\n" +
+            "        \"dimSort\": \"00090001\",\n" +
+            "        \"drawingGuid\": \"ac3cdf40-f23d-442c-9bc7-7dbc1583803b\",\n" +
+            "        \"guid\": \"f05e8fc0-0bab-4c9d-b359-d42bec7a9fd8\",\n" +
+            "        \"lowerTol\": -99,\n" +
+            "        \"multiplier\": 1,\n" +
+            "        \"nominal\": 1,\n" +
+            "        \"note\": \"\",\n" +
+            "        \"operationGuid\": \"ad9fbe15-6cac-42a1-a055-27a2f095c0b4\",\n" +
+            "        \"requirement\": \"{ 1~.0~0~ }\",\n" +
+            "        \"shapeActive\": 1,\n" +
+            "        \"shapeCenter\": \"585,184\",\n" +
+            "        \"shapeLocation\": \"B5\",\n" +
+            "        \"shapeOffset\": \"0,0\",\n" +
+            "        \"shapePoints\": \"46,24\",\n" +
+            "        \"shapeRotateAngle\": 0,\n" +
+            "        \"shapeTitle\": \"9\",\n" +
+            "        \"shapeType\": 3,\n" +
+            "        \"tolCalc\": 0,\n" +
+            "        \"tolClass\": \"\",\n" +
+            "        \"tolMod1\": \"\",\n" +
+            "        \"tolMod2\": \"\",\n" +
+            "        \"tolMod3\": \"\",\n" +
+            "        \"tolType\": 3,\n" +
+            "        \"tolTypeText\": \"Basic\",\n" +
+            "        \"type\": 15,\n" +
+            "        \"typeText\": \"Linear\",\n" +
+            "        \"units\": 2,\n" +
+            "        \"upperTol\": 99,\n" +
+            "        \"procedureGuid\": \"\",\n" +
+            "        \"inspCenterGuid\": \"\",\n" +
+            "        \"flag\": \"514b2b5c32e091c1276a8b913c33ca49\",\n" +
+            "        \"updateTime\": 1670050116\n" +
+            "    },\n" +
+            "    {\n" +
+            "        \"id\": \"1598932195748081669\",\n" +
+            "        \"companyId\": \"0\",\n" +
+            "        \"companyName\": \"\",\n" +
+            "        \"serverId\": \"-1\",\n" +
+            "        \"serverName\": \"\",\n" +
+            "        \"partGuid\": \"1b6c9a2e-b122-4a57-a2a4-5532d6dbb229\",\n" +
+            "        \"datMod1\": \"\",\n" +
+            "        \"datMod2\": \"\",\n" +
+            "        \"datMod3\": \"\",\n" +
+            "        \"datum1\": \"\",\n" +
+            "        \"datum2\": \"\",\n" +
+            "        \"datum3\": \"\",\n" +
+            "        \"designator\": \"\",\n" +
+            "        \"dimNo\": \"1 OP10\",\n" +
+            "        \"dimSort\": \"00010001\",\n" +
+            "        \"drawingGuid\": \"ac3cdf40-f23d-442c-9bc7-7dbc1583803b\",\n" +
+            "        \"guid\": \"ee69c3a5-20fb-46e5-a8ce-5944e6d77343\",\n" +
+            "        \"lowerTol\": 0,\n" +
+            "        \"multiplier\": 1,\n" +
+            "        \"nominal\": 0,\n" +
+            "        \"note\": \"THRU;\",\n" +
+            "        \"operationGuid\": \"ad9fbe15-6cac-42a1-a055-27a2f095c0b4\",\n" +
+            "        \"requirement\": \"Ø.157\",\n" +
+            "        \"shapeActive\": 1,\n" +
+            "        \"shapeCenter\": \"390,29\",\n" +
+            "        \"shapeLocation\": \"A4\",\n" +
+            "        \"shapeOffset\": \"0,0\",\n" +
+            "        \"shapePoints\": \"99,22\",\n" +
+            "        \"shapeRotateAngle\": 0,\n" +
+            "        \"shapeTitle\": \"1\",\n" +
+            "        \"shapeType\": 3,\n" +
+            "        \"tolCalc\": 1,\n" +
+            "        \"tolClass\": \"\",\n" +
+            "        \"tolMod1\": \"\",\n" +
+            "        \"tolMod2\": \"\",\n" +
+            "        \"tolMod3\": \"\",\n" +
+            "        \"tolType\": 0,\n" +
+            "        \"tolTypeText\": \"\",\n" +
+            "        \"type\": 12,\n" +
+            "        \"typeText\": \"Diameter\",\n" +
+            "        \"units\": 2,\n" +
+            "        \"upperTol\": 0,\n" +
+            "        \"procedureGuid\": \"\",\n" +
+            "        \"inspCenterGuid\": \"\",\n" +
+            "        \"flag\": \"5e6369a59decc1ad0519578419cafe75\",\n" +
+            "        \"updateTime\": 1670050116\n" +
+            "    },\n" +
+            "    {\n" +
+            "        \"id\": \"1598932195362205698\",\n" +
+            "        \"companyId\": \"0\",\n" +
+            "        \"companyName\": \"\",\n" +
+            "        \"serverId\": \"-1\",\n" +
+            "        \"serverName\": \"\",\n" +
+            "        \"partGuid\": \"1b6c9a2e-b122-4a57-a2a4-5532d6dbb229\",\n" +
+            "        \"datMod1\": \"\",\n" +
+            "        \"datMod2\": \"\",\n" +
+            "        \"datMod3\": \"\",\n" +
+            "        \"datum1\": \"\",\n" +
+            "        \"datum2\": \"\",\n" +
+            "        \"datum3\": \"\",\n" +
+            "        \"designator\": \"\",\n" +
+            "        \"dimNo\": \"8 OP10\",\n" +
+            "        \"dimSort\": \"00080001\",\n" +
+            "        \"drawingGuid\": \"ac3cdf40-f23d-442c-9bc7-7dbc1583803b\",\n" +
+            "        \"guid\": \"04f788b2-980d-4ce7-8adf-07aa13f839c3\",\n" +
+            "        \"lowerTol\": 0,\n" +
+            "        \"multiplier\": 1,\n" +
+            "        \"nominal\": 0,\n" +
+            "        \"note\": \"\",\n" +
+            "        \"operationGuid\": \"ad9fbe15-6cac-42a1-a055-27a2f095c0b4\",\n" +
+            "        \"requirement\": \"{¸~|.0~0~3~}\",\n" +
+            "        \"shapeActive\": 1,\n" +
+            "        \"shapeCenter\": \"252, 182\",\n" +
+            "        \"shapeLocation\": \"B3\",\n" +
+            "        \"shapeOffset\": \"0,0\",\n" +
+            "        \"shapePoints\": \"88,26\",\n" +
+            "        \"shapeRotateAngle\": 0,\n" +
+            "        \"shapeTitle\": \"8\",\n" +
+            "        \"shapeType\": 3,\n" +
+            "        \"tolCalc\": 0,\n" +
+            "        \"tolClass\": \"\",\n" +
+            "        \"tolMod1\": \"\",\n" +
+            "        \"tolMod2\": \"\",\n" +
+            "        \"tolMod3\": \"\",\n" +
+            "        \"tolType\": 2,\n" +
+            "        \"tolTypeText\": \"As Limit\",\n" +
+            "        \"type\": 13,\n" +
+            "        \"typeText\": \"Flatness\",\n" +
+            "        \"units\": 2,\n" +
+            "        \"upperTol\": 0,\n" +
+            "        \"procedureGuid\": \"\",\n" +
+            "        \"inspCenterGuid\": \"\",\n" +
+            "        \"flag\": \"5ca8a9af31d4713366e180bf88d63eb6\",\n" +
+            "        \"updateTime\": 1670050116\n" +
+            "    },\n" +
+            "    {\n" +
+            "        \"id\": \"1598932195492229125\",\n" +
+            "        \"companyId\": \"0\",\n" +
+            "        \"companyName\": \"\",\n" +
+            "        \"serverId\": \"-1\",\n" +
+            "        \"serverName\": \"\",\n" +
+            "        \"partGuid\": \"1b6c9a2e-b122-4a57-a2a4-5532d6dbb229\",\n" +
+            "        \"datMod1\": \"\",\n" +
+            "        \"datMod2\": \"\",\n" +
+            "        \"datMod3\": \"\",\n" +
+            "        \"datum1\": \"\",\n" +
+            "        \"datum2\": \"\",\n" +
+            "        \"datum3\": \"\",\n" +
+            "        \"designator\": \"\",\n" +
+            "        \"dimNo\": \"2 OP10\",\n" +
+            "        \"dimSort\": \"00020001\",\n" +
+            "        \"drawingGuid\": \"ac3cdf40-f23d-442c-9bc7-7dbc1583803b\",\n" +
+            "        \"guid\": \"133d4c88-7cac-4c21-9ff3-44fdba889932\",\n" +
+            "        \"lowerTol\": 0,\n" +
+            "        \"multiplier\": 1,\n" +
+            "        \"nominal\": 0,\n" +
+            "        \"note\": \"\",\n" +
+            "        \"operationGuid\": \"ad9fbe15-6cac-42a1-a055-27a2f095c0b4\",\n" +
+            "        \"requirement\": \"{¸~|.0~0~3~}\",\n" +
+            "        \"shapeActive\": 1,\n" +
+            "        \"shapeCenter\": \"134, 85\",\n" +
+            "        \"shapeLocation\": \"A2\",\n" +
+            "        \"shapeOffset\": \"0,0\",\n" +
+            "        \"shapePoints\": \"88,27\",\n" +
+            "        \"shapeRotateAngle\": 0,\n" +
+            "        \"shapeTitle\": \"2\",\n" +
+            "        \"shapeType\": 3,\n" +
+            "        \"tolCalc\": 0,\n" +
+            "        \"tolClass\": \"\",\n" +
+            "        \"tolMod1\": \"\",\n" +
+            "        \"tolMod2\": \"\",\n" +
+            "        \"tolMod3\": \"\",\n" +
+            "        \"tolType\": 2,\n" +
+            "        \"tolTypeText\": \"As Limit\",\n" +
+            "        \"type\": 13,\n" +
+            "        \"typeText\": \"Flatness\",\n" +
+            "        \"units\": 2,\n" +
+            "        \"upperTol\": 0,\n" +
+            "        \"procedureGuid\": \"\",\n" +
+            "        \"inspCenterGuid\": \"\",\n" +
+            "        \"flag\": \"5752cb201ff8b4de8722d1cdbe92f0fb\",\n" +
+            "        \"updateTime\": 1670050116\n" +
+            "    },\n" +
+            "    {\n" +
+            "        \"id\": \"1598932195492229124\",\n" +
+            "        \"companyId\": \"0\",\n" +
+            "        \"companyName\": \"\",\n" +
+            "        \"serverId\": \"-1\",\n" +
+            "        \"serverName\": \"\",\n" +
+            "        \"partGuid\": \"1b6c9a2e-b122-4a57-a2a4-5532d6dbb229\",\n" +
+            "        \"datMod1\": \"\",\n" +
+            "        \"datMod2\": \"\",\n" +
+            "        \"datMod3\": \"\",\n" +
+            "        \"datum1\": \"A\",\n" +
+            "        \"datum2\": \"B\",\n" +
+            "        \"datum3\": \"C\",\n" +
+            "        \"designator\": \"\",\n" +
+            "        \"dimNo\": \"7 OP10\",\n" +
+            "        \"dimSort\": \"00070001\",\n" +
+            "        \"drawingGuid\": \"ac3cdf40-f23d-442c-9bc7-7dbc1583803b\",\n" +
+            "        \"guid\": \"65f12321-3ced-406a-baa2-6bb91a055e5a\",\n" +
+            "        \"lowerTol\": 0,\n" +
+            "        \"multiplier\": 1,\n" +
+            "        \"nominal\": 0,\n" +
+            "        \"note\": \"\",\n" +
+            "        \"operationGuid\": \"ad9fbe15-6cac-42a1-a055-27a2f095c0b4\",\n" +
+            "        \"requirement\": \"{º~|.0~4~|A~|B~|C~}\",\n" +
+            "        \"shapeActive\": 1,\n" +
+            "        \"shapeCenter\": \"252, 158\",\n" +
+            "        \"shapeLocation\": \"A3\",\n" +
+            "        \"shapeOffset\": \"0,0\",\n" +
+            "        \"shapePoints\": \"151,26\",\n" +
+            "        \"shapeRotateAngle\": 0,\n" +
+            "        \"shapeTitle\": \"7\",\n" +
+            "        \"shapeType\": 3,\n" +
+            "        \"tolCalc\": 0,\n" +
+            "        \"tolClass\": \"\",\n" +
+            "        \"tolMod1\": \"\",\n" +
+            "        \"tolMod2\": \"\",\n" +
+            "        \"tolMod3\": \"\",\n" +
+            "        \"tolType\": 2,\n" +
+            "        \"tolTypeText\": \"As Limit\",\n" +
+            "        \"type\": 27,\n" +
+            "        \"typeText\": \"Surface Profile\",\n" +
+            "        \"units\": 2,\n" +
+            "        \"upperTol\": 0,\n" +
+            "        \"procedureGuid\": \"\",\n" +
+            "        \"inspCenterGuid\": \"\",\n" +
+            "        \"flag\": \"d0505c50ec42acfc3f95739f2b9860c0\",\n" +
+            "        \"updateTime\": 1670050116\n" +
+            "    },\n" +
+            "    {\n" +
+            "        \"id\": \"1598932195685167105\",\n" +
+            "        \"companyId\": \"0\",\n" +
+            "        \"companyName\": \"\",\n" +
+            "        \"serverId\": \"-1\",\n" +
+            "        \"serverName\": \"\",\n" +
+            "        \"partGuid\": \"1b6c9a2e-b122-4a57-a2a4-5532d6dbb229\",\n" +
+            "        \"datMod1\": \"\",\n" +
+            "        \"datMod2\": \"\",\n" +
+            "        \"datMod3\": \"\",\n" +
+            "        \"datum1\": \"\",\n" +
+            "        \"datum2\": \"\",\n" +
+            "        \"datum3\": \"\",\n" +
+            "        \"designator\": \"\",\n" +
+            "        \"dimNo\": \"5 OP10\",\n" +
+            "        \"dimSort\": \"00050001\",\n" +
+            "        \"drawingGuid\": \"ac3cdf40-f23d-442c-9bc7-7dbc1583803b\",\n" +
+            "        \"guid\": \"5c21e9ec-b6f5-474e-aca1-db0e7464f922\",\n" +
+            "        \"lowerTol\": -99,\n" +
+            "        \"multiplier\": 1,\n" +
+            "        \"nominal\": 0,\n" +
+            "        \"note\": \"\",\n" +
+            "        \"operationGuid\": \"ad9fbe15-6cac-42a1-a055-27a2f095c0b4\",\n" +
+            "        \"requirement\": \"{ .5~0~ }\",\n" +
+            "        \"shapeActive\": 1,\n" +
+            "        \"shapeCenter\": \"722,123\",\n" +
+            "        \"shapeLocation\": \"A6\",\n" +
+            "        \"shapeOffset\": \"0,0\",\n" +
+            "        \"shapePoints\": \"37,23\",\n" +
+            "        \"shapeRotateAngle\": 0,\n" +
+            "        \"shapeTitle\": \"5\",\n" +
+            "        \"shapeType\": 3,\n" +
+            "        \"tolCalc\": 0,\n" +
+            "        \"tolClass\": \"\",\n" +
+            "        \"tolMod1\": \"\",\n" +
+            "        \"tolMod2\": \"\",\n" +
+            "        \"tolMod3\": \"\",\n" +
+            "        \"tolType\": 3,\n" +
+            "        \"tolTypeText\": \"Basic\",\n" +
+            "        \"type\": 15,\n" +
+            "        \"typeText\": \"Linear\",\n" +
+            "        \"units\": 2,\n" +
+            "        \"upperTol\": 99,\n" +
+            "        \"procedureGuid\": \"\",\n" +
+            "        \"inspCenterGuid\": \"\",\n" +
+            "        \"flag\": \"5474373546b08c5a70ea011eba91685f\",\n" +
+            "        \"updateTime\": 1670050116\n" +
+            "    },\n" +
+            "    {\n" +
+            "        \"id\": \"1598932195362205697\",\n" +
+            "        \"companyId\": \"0\",\n" +
+            "        \"companyName\": \"\",\n" +
+            "        \"serverId\": \"-1\",\n" +
+            "        \"serverName\": \"\",\n" +
+            "        \"partGuid\": \"1b6c9a2e-b122-4a57-a2a4-5532d6dbb229\",\n" +
+            "        \"datMod1\": \"\",\n" +
+            "        \"datMod2\": \"\",\n" +
+            "        \"datMod3\": \"\",\n" +
+            "        \"datum1\": \"B\",\n" +
+            "        \"datum2\": \"A\",\n" +
+            "        \"datum3\": \"C\",\n" +
+            "        \"designator\": \"\",\n" +
+            "        \"dimNo\": \"3 OP10\",\n" +
+            "        \"dimSort\": \"00030001\",\n" +
+            "        \"drawingGuid\": \"ac3cdf40-f23d-442c-9bc7-7dbc1583803b\",\n" +
+            "        \"guid\": \"edbce4b8-2ef7-4c2e-9b3d-6f926a06e597\",\n" +
+            "        \"lowerTol\": 0,\n" +
+            "        \"multiplier\": 1,\n" +
+            "        \"nominal\": 0,\n" +
+            "        \"note\": \"\",\n" +
+            "        \"operationGuid\": \"ad9fbe15-6cac-42a1-a055-27a2f095c0b4\",\n" +
+            "        \"requirement\": \"{¿~|Ø~.0~4~|B~|A~|C~}\",\n" +
+            "        \"shapeActive\": 1,\n" +
+            "        \"shapeCenter\": \"331, 67\",\n" +
+            "        \"shapeLocation\": \"A4\",\n" +
+            "        \"shapeOffset\": \"0,0\",\n" +
+            "        \"shapePoints\": \"162,26\",\n" +
+            "        \"shapeRotateAngle\": 0,\n" +
+            "        \"shapeTitle\": \"3\",\n" +
+            "        \"shapeType\": 3,\n" +
+            "        \"tolCalc\": 0,\n" +
+            "        \"tolClass\": \"\",\n" +
+            "        \"tolMod1\": \"Ø\",\n" +
+            "        \"tolMod2\": \"\",\n" +
+            "        \"tolMod3\": \"\",\n" +
+            "        \"tolType\": 2,\n" +
+            "        \"tolTypeText\": \"As Limit\",\n" +
+            "        \"type\": 30,\n" +
+            "        \"typeText\": \"True Position\",\n" +
+            "        \"units\": 2,\n" +
+            "        \"upperTol\": 0,\n" +
+            "        \"procedureGuid\": \"\",\n" +
+            "        \"inspCenterGuid\": \"\",\n" +
+            "        \"flag\": \"33420b29c5f2766875b03b42760bfd76\",\n" +
+            "        \"updateTime\": 1670050116\n" +
+            "    },\n" +
+            "    {\n" +
+            "        \"id\": \"1598932195748081669\",\n" +
+            "        \"companyId\": \"0\",\n" +
+            "        \"companyName\": \"\",\n" +
+            "        \"serverId\": \"-1\",\n" +
+            "        \"serverName\": \"\",\n" +
+            "        \"partGuid\": \"1b6c9a2e-b122-4a57-a2a4-5532d6dbb229\",\n" +
+            "        \"datMod1\": \"\",\n" +
+            "        \"datMod2\": \"\",\n" +
+            "        \"datMod3\": \"\",\n" +
+            "        \"datum1\": \"\",\n" +
+            "        \"datum2\": \"\",\n" +
+            "        \"datum3\": \"\",\n" +
+            "        \"designator\": \"\",\n" +
+            "        \"dimNo\": \"1 OP10\",\n" +
+            "        \"dimSort\": \"00010001\",\n" +
+            "        \"drawingGuid\": \"ac3cdf40-f23d-442c-9bc7-7dbc1583803b\",\n" +
+            "        \"guid\": \"ee69c3a5-20fb-46e5-a8ce-5944e6d77343\",\n" +
+            "        \"lowerTol\": 0,\n" +
+            "        \"multiplier\": 1,\n" +
+            "        \"nominal\": 0,\n" +
+            "        \"note\": \"THRU;\",\n" +
+            "        \"operationGuid\": \"ad9fbe15-6cac-42a1-a055-27a2f095c0b4\",\n" +
+            "        \"requirement\": \"Ø.157\",\n" +
+            "        \"shapeActive\": 1,\n" +
+            "        \"shapeCenter\": \"390,29\",\n" +
+            "        \"shapeLocation\": \"A4\",\n" +
+            "        \"shapeOffset\": \"0,0\",\n" +
+            "        \"shapePoints\": \"99,22\",\n" +
+            "        \"shapeRotateAngle\": 0,\n" +
+            "        \"shapeTitle\": \"1\",\n" +
+            "        \"shapeType\": 3,\n" +
+            "        \"tolCalc\": 1,\n" +
+            "        \"tolClass\": \"\",\n" +
+            "        \"tolMod1\": \"\",\n" +
+            "        \"tolMod2\": \"\",\n" +
+            "        \"tolMod3\": \"\",\n" +
+            "        \"tolType\": 0,\n" +
+            "        \"tolTypeText\": \"\",\n" +
+            "        \"type\": 12,\n" +
+            "        \"typeText\": \"Diameter\",\n" +
+            "        \"units\": 2,\n" +
+            "        \"upperTol\": 0,\n" +
+            "        \"procedureGuid\": \"\",\n" +
+            "        \"inspCenterGuid\": \"\",\n" +
+            "        \"flag\": \"5e6369a59decc1ad0519578419cafe75\",\n" +
+            "        \"updateTime\": 1670050116\n" +
+            "    }\n" +
+            "]");
+
+    static final JSONArray points_90 = JSONArray.parseArray("[\n" +
+            "    {\n" +
+            "        \"id\": \"1598932196855377921\",\n" +
+            "        \"companyId\": \"0\",\n" +
+            "        \"companyName\": \"\",\n" +
+            "        \"serverId\": \"-1\",\n" +
+            "        \"serverName\": \"\",\n" +
+            "        \"partGuid\": \"c618eb2c-5455-4d59-a974-1c992a8e9eee\",\n" +
+            "        \"datMod1\": \"\",\n" +
+            "        \"datMod2\": \"\",\n" +
+            "        \"datMod3\": \"\",\n" +
+            "        \"datum1\": \"\",\n" +
+            "        \"datum2\": \"\",\n" +
+            "        \"datum3\": \"\",\n" +
+            "        \"designator\": \"\",\n" +
+            "        \"dimNo\": \"2 OP10\",\n" +
+            "        \"dimSort\": \"00020001\",\n" +
+            "        \"drawingGuid\": \"a17d6ab9-ad9e-4956-9fcc-f39989264548\",\n" +
+            "        \"guid\": \"3912d9df-3e75-44dc-819c-51bf72cf25e3\",\n" +
+            "        \"lowerTol\": 0,\n" +
+            "        \"multiplier\": 1,\n" +
+            "        \"nominal\": 0,\n" +
+            "        \"note\": \"\",\n" +
+            "        \"operationGuid\": \"d13a1c7e-5f6d-4c4b-8e2c-640a38c2d01c\",\n" +
+            "        \"requirement\": \"{¸~|.0~0~3~}\",\n" +
+            "        \"shapeActive\": 1,\n" +
+            "        \"shapeCenter\": \"133,79\",\n" +
+            "        \"shapeLocation\": \"A2\",\n" +
+            "        \"shapeOffset\": \"0,0\",\n" +
+            "        \"shapePoints\": \"90,39\",\n" +
+            "        \"shapeRotateAngle\": 0,\n" +
+            "        \"shapeTitle\": \"2\",\n" +
+            "        \"shapeType\": 3,\n" +
+            "        \"tolCalc\": 0,\n" +
+            "        \"tolClass\": \"\",\n" +
+            "        \"tolMod1\": \"\",\n" +
+            "        \"tolMod2\": \"\",\n" +
+            "        \"tolMod3\": \"\",\n" +
+            "        \"tolType\": 2,\n" +
+            "        \"tolTypeText\": \"As Limit\",\n" +
+            "        \"type\": 13,\n" +
+            "        \"typeText\": \"Flatness\",\n" +
+            "        \"units\": 2,\n" +
+            "        \"upperTol\": 0,\n" +
+            "        \"procedureGuid\": \"\",\n" +
+            "        \"inspCenterGuid\": \"\",\n" +
+            "        \"flag\": \"9640d6af481024f1ec723e5be3f103a2\",\n" +
+            "        \"updateTime\": 1670050117\n" +
+            "    },\n" +
+            "    {\n" +
+            "        \"id\": \"1598932196922486786\",\n" +
+            "        \"companyId\": \"0\",\n" +
+            "        \"companyName\": \"\",\n" +
+            "        \"serverId\": \"-1\",\n" +
+            "        \"serverName\": \"\",\n" +
+            "        \"partGuid\": \"c618eb2c-5455-4d59-a974-1c992a8e9eee\",\n" +
+            "        \"datMod1\": \"\",\n" +
+            "        \"datMod2\": \"\",\n" +
+            "        \"datMod3\": \"\",\n" +
+            "        \"datum1\": \"\",\n" +
+            "        \"datum2\": \"\",\n" +
+            "        \"datum3\": \"\",\n" +
+            "        \"designator\": \"\",\n" +
+            "        \"dimNo\": \"1 OP10\",\n" +
+            "        \"dimSort\": \"00010001\",\n" +
+            "        \"drawingGuid\": \"a17d6ab9-ad9e-4956-9fcc-f39989264548\",\n" +
+            "        \"guid\": \"8dd87f85-a092-44fe-901a-c4de467d7a98\",\n" +
+            "        \"lowerTol\": 0,\n" +
+            "        \"multiplier\": 1,\n" +
+            "        \"nominal\": 0,\n" +
+            "        \"note\": \"\",\n" +
+            "        \"operationGuid\": \"d13a1c7e-5f6d-4c4b-8e2c-640a38c2d01c\",\n" +
+            "        \"requirement\": \"Ø.157\",\n" +
+            "        \"shapeActive\": 1,\n" +
+            "        \"shapeCenter\": \"384,30\",\n" +
+            "        \"shapeLocation\": \"A4\",\n" +
+            "        \"shapeOffset\": \"0,0\",\n" +
+            "        \"shapePoints\": \"60,22\",\n" +
+            "        \"shapeRotateAngle\": 0,\n" +
+            "        \"shapeTitle\": \"1\",\n" +
+            "        \"shapeType\": 3,\n" +
+            "        \"tolCalc\": 1,\n" +
+            "        \"tolClass\": \"\",\n" +
+            "        \"tolMod1\": \"\",\n" +
+            "        \"tolMod2\": \"\",\n" +
+            "        \"tolMod3\": \"\",\n" +
+            "        \"tolType\": 0,\n" +
+            "        \"tolTypeText\": \"\",\n" +
+            "        \"type\": 12,\n" +
+            "        \"typeText\": \"Diameter\",\n" +
+            "        \"units\": 2,\n" +
+            "        \"upperTol\": 0,\n" +
+            "        \"procedureGuid\": \"\",\n" +
+            "        \"inspCenterGuid\": \"\",\n" +
+            "        \"flag\": \"30ad44c4af2bd1d72a1094672ef16101\",\n" +
+            "        \"updateTime\": 1670050117\n" +
+            "    }\n" +
+            "]");
+}

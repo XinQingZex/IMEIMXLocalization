@@ -1,0 +1,53 @@
+package com.agile.qdmp.standalong.model.dto.organization.query;
+
+import com.agile.tem.common.core.model.BaseQueryDTO;
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
+import lombok.Data;
+
+/**
+ * 职员表
+ *
+ * @author wenbinglei
+ * @date 2022-04-26 16:16:41
+ */
+@Data
+@ApiModel(value = "StaffQueryDTO", description = "职员表")
+public class StaffQueryDTO extends BaseQueryDTO {
+    private static final long serialVersionUID = 1L;
+    /**
+     * 搜索关键词
+     */
+    @ApiModelProperty(value = "搜索关键词")
+    private String keyWord;
+    /**
+     * 企业id
+     */
+    @ApiModelProperty(value = "企业id")
+    private Long companyId;
+    /**
+     * 部门id
+     */
+    @ApiModelProperty(value = "部门id")
+    private Long departmentId;
+    /**
+     * 用户id
+     */
+    @ApiModelProperty(value = "用户id")
+    private Long accountId;
+    /**
+     * 编码
+     */
+    @ApiModelProperty(value = "编码")
+    private String code;
+    /**
+     * 姓名
+     */
+    @ApiModelProperty(value = "姓名")
+    private String name;
+    /**
+     * 状态 有效 无效
+     */
+    @ApiModelProperty(value = "状态 有效 无效")
+    private Boolean state;
+}
